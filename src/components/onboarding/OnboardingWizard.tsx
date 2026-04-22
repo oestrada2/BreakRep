@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { useState, useEffect } from 'react';
+import { signIn, useSession } from 'next-auth/react';
 import type { AppSettings, ExperienceLevel, EnabledExercises, Team } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { NotificationService } from '@/lib/notifications';
@@ -1117,6 +1117,15 @@ type SubStep = 'choice' | 'assess-reps' | 'assess-result' | 'manual';
 export function OnboardingWizard({ onComplete, isReturningUser = false }: OnboardingWizardProps) {
   const [step, setStep] = useState(0);
   const [subStep, setSubStep] = useState<SubStep>('choice');
+  const { status } = useSession();
+
+  // After Google OAuth redirects back, session becomes authenticated but
+  // onboardingComplete is still false. Jump to profile step to finish setup.
+  useEffect(() => {
+    if (status === 'authenticated' && step < 6) {
+      setStep(6);
+    }
+  }, [status]);
   const [fitnessLevel, setFitnessLevel] = useState<ExperienceLevel>('beginner');
   const [assessReps, setAssessReps] = useState(0);
   const [enabledExercises, setEnabledExercises] = useState<EnabledExercises>({
