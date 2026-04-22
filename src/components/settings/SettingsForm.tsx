@@ -290,24 +290,13 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification }
                 })()}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-[var(--ct2)] text-xs block mb-1">Display name</label>
-                <input
-                  value={draft.displayName}
-                  onChange={e => setDraft(d => ({ ...d, displayName: e.target.value }))}
-                  className="w-full bg-[var(--c4)] border border-[var(--c5)] rounded-xl px-3 py-2 text-sm text-[var(--ct0)] focus:border-[#FACC15]/50 outline-none transition-colors"
-                />
-              </div>
-              <div>
-                <label className="text-[var(--ct2)] text-xs block mb-1">Username</label>
-                <input
-                  value={draft.username}
-                  onChange={e => setDraft(d => ({ ...d, username: e.target.value }))}
-                  placeholder="@optional"
-                  className="w-full bg-[var(--c4)] border border-[var(--c5)] rounded-xl px-3 py-2 text-sm text-[var(--ct0)] placeholder-[var(--ct2)] focus:border-[#FACC15]/50 outline-none transition-colors"
-                />
-              </div>
+            <div>
+              <label className="text-[var(--ct2)] text-xs block mb-1">Display name</label>
+              <input
+                value={draft.displayName}
+                onChange={e => setDraft(d => ({ ...d, displayName: e.target.value }))}
+                className="w-full bg-[var(--c4)] border border-[var(--c5)] rounded-xl px-3 py-2 text-sm text-[var(--ct0)] focus:border-[#FACC15]/50 outline-none transition-colors"
+              />
             </div>
             <div>
               <label className="text-[var(--ct2)] text-xs block mb-1">Email</label>
