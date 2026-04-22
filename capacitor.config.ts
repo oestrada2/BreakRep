@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.pushhour.app',
-  appName: 'PushUp Hourly',
+  appId: 'com.breakrep.app',
+  appName: 'BreakRep',
   webDir: 'out',    // Next.js static export target
   android: {
     allowMixedContent: false,
