@@ -305,7 +305,7 @@ function CreateTeamSheet({ onClose, onCreated }: { onClose: () => void; onCreate
 // ── Team card ─────────────────────────────────────────────────────────────────
 function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated: Team) => void; onLeave: () => void }) {
   const [codeCopied, setCodeCopied] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   const adminMembers  = team.members.filter(m => m.role === 'admin');
   const activeMembers = team.members.filter(m => m.role === 'member');
