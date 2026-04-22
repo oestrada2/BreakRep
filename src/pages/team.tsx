@@ -473,9 +473,28 @@ export default function TeamPage() {
             </div>
           </div>
         ) : (
-          teams.map(team => (
-            <TeamCard key={team.id} team={team} onUpdate={updateTeam} onLeave={() => leaveTeam(team.id)} />
-          ))
+          <>
+            {teams.map(team => (
+              <TeamCard key={team.id} team={team} onUpdate={updateTeam} onLeave={() => leaveTeam(team.id)} />
+            ))}
+            {/* Always-visible create / join buttons below the team list */}
+            <div className="flex gap-2 mt-2 mb-4">
+              <button
+                onClick={() => setShowCreate(true)}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-[var(--c5)] text-[var(--ct2)] text-sm font-semibold hover:border-[#FACC15]/50 hover:text-[#FACC15] transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Create team
+              </button>
+              <button
+                onClick={() => setShowJoin(true)}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-[var(--c5)] text-[var(--ct2)] text-sm font-semibold hover:border-[#22C55E]/50 hover:text-[#22C55E] transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                Join team
+              </button>
+            </div>
+          </>
         )}
       </main>
 
