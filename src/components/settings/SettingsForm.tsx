@@ -248,7 +248,7 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification }
           </div>
         ) : (
           <div className="px-4 py-4 space-y-3">
-            {/* Avatar preview + photo URL */}
+            {/* Avatar preview + photo picker */}
             <div className="flex items-center gap-3">
               <div className="w-14 h-14 rounded-2xl shrink-0 overflow-hidden bg-gradient-to-br from-[var(--ca)] to-[#1D4ED8] flex items-center justify-center">
                 {draft.avatarUrl
@@ -257,20 +257,35 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification }
                 }
               </div>
               <div className="flex-1">
-                <label className="text-[var(--ct2)] text-xs block mb-1">Photo URL</label>
                 <input
-                  value={draft.avatarUrl ?? ''}
-                  onChange={e => setDraft(d => ({ ...d, avatarUrl: e.target.value }))}
-                  placeholder="https://..."
-                  className="w-full bg-[var(--c4)] border border-[var(--c5)] rounded-xl px-3 py-2 text-xs text-[var(--ct0)] placeholder-[var(--ct2)] focus:border-[#FACC15]/50 outline-none transition-colors"
+                  type="file"
+                  accept="image/*"
+                  id="avatar-file-input"
+                  className="hidden"
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = ev => setDraft(d => ({ ...d, avatarUrl: ev.target?.result as string }));
+                    reader.readAsDataURL(file);
+                  }}
                 />
+                <button
+                  onClick={() => document.getElementById('avatar-file-input')?.click()}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold hover:border-[#FACC15]/50 hover:text-[var(--ct0)] transition-colors"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+                  </svg>
+                  Choose from gallery
+                </button>
                 {(session?.user as any)?.image && (() => {
                   const googlePhoto = (session!.user as any).image as string;
                   return (
                     <button
                       onClick={() => setDraft(d => ({ ...d, avatarUrl: googlePhoto }))}
-                      className="mt-1 text-[10px] text-[var(--ca)] hover:underline"
-                    >Use Google photo</button>
+                      className="mt-1.5 w-full text-center text-[10px] text-[var(--ct2)] hover:text-[var(--ca)] transition-colors"
+                    >Reset to Google photo</button>
                   );
                 })()}
               </div>
