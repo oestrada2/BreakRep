@@ -86,18 +86,18 @@ export function NextSessionCard({ sessions, enabledExercises, customExerciseLabe
   })();
 
   function getReps(key: string) {
-    return reps[key] !== undefined ? reps[key] : String(next.targetReps);
+    return reps[key] !== undefined ? reps[key] : String(next?.targetReps ?? 0);
   }
   function setRep(key: string, val: string) {
     setReps(r => ({ ...r, [key]: val }));
   }
   function adjustRep(key: string, delta: number) {
     const cur = parseInt(getReps(key), 10);
-    setRep(key, String(Math.max(0, (isNaN(cur) ? next.targetReps : cur) + delta)));
+    setRep(key, String(Math.max(0, (isNaN(cur) ? (next?.targetReps ?? 0) : cur) + delta)));
   }
   function parseRep(key: string) {
     const p = parseInt(getReps(key), 10);
-    return isNaN(p) ? next.targetReps : p;
+    return isNaN(p) ? (next?.targetReps ?? 0) : p;
   }
 
   return (
