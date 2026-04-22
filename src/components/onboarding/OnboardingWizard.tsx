@@ -3,6 +3,7 @@ import { signIn, useSession } from 'next-auth/react';
 import type { AppSettings, ExperienceLevel, EnabledExercises, Team } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { NotificationService } from '@/lib/notifications';
+import { supabase } from '@/lib/supabase';
 
 const PRESETS: Record<ExperienceLevel, Partial<AppSettings['progression']>> = {
   beginner:     { startingReps: 5,  increaseAmount: 2, increaseEveryDays: 3, maxReps: 30 },
@@ -1143,7 +1144,7 @@ type SubStep = 'choice' | 'assess-reps' | 'assess-result' | 'manual';
 export function OnboardingWizard({ onComplete, isReturningUser = false }: OnboardingWizardProps) {
   const [step, setStep] = useState(0);
   const [subStep, setSubStep] = useState<SubStep>('choice');
-  const { status } = useSession();
+  const { data: session, status } = useSession();
 
   // Only jump to step 6 when returning from our specific OAuth flow.
   // We detect this via ?onboarding=1 in the callbackUrl, so a regular
@@ -1183,17 +1184,20 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
     setEnabledExercises(prev => { const next = { ...prev }; delete next[key]; return next; });
   };
 
-  const finish = (profileName = '', firstName = '', lastName = '') => {
+  const finish = async (profileName = '', firstName = '', lastName = '') => {
+    const teamId = createdTeamName && createdTeamCode ? 'team-' + Date.now() : '';
+    const adminName = `${firstName} ${lastName}`.trim() || profileName || 'Admin';
+
     const teams: Team[] = createdTeamName && createdTeamCode ? [{
-      id: 'team-' + Date.now(),
+      id: teamId,
       name: createdTeamName,
       code: createdTeamCode,
       isAdmin: true,
-      members: [{ id: 'admin-' + Date.now(), displayName: profileName || 'Team Admin', role: 'admin' as const, joinedAt: Date.now() }],
+      members: [{ id: 'admin-' + Date.now(), displayName: adminName, role: 'admin' as const, joinedAt: Date.now() }],
       joinedAt: Date.now(),
     }] : [];
 
-    // Persist profile so SettingsForm (which reads puh_profile) reflects it immediately.
+    // Persist profile to localStorage so SettingsForm reflects it immediately.
     try {
       const existing = JSON.parse(localStorage.getItem('puh_profile') ?? 'null') ?? {};
       localStorage.setItem('puh_profile', JSON.stringify({
@@ -1204,6 +1208,28 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
         ...(createdTeamName && { team: createdTeamName }),
       }));
     } catch {}
+
+    // Persist profile to Supabase
+    const email = session?.user?.email ?? '';
+    if (email) {
+      await supabase.from('profiles').upsert({
+        email,
+        first_name:   firstName   || null,
+        last_name:    lastName    || null,
+        display_name: profileName || null,
+        avatar_url:   (session?.user as any)?.image || null,
+      });
+    }
+
+    // Save team created during onboarding to Supabase
+    if (teamId && createdTeamName && createdTeamCode) {
+      await supabase.from('teams').upsert({
+        id:         teamId,
+        name:       createdTeamName,
+        code:       createdTeamCode,
+        admin_name: adminName,
+      });
+    }
 
     onComplete({
       experienceLevel: fitnessLevel,
