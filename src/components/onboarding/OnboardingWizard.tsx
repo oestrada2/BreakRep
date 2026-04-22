@@ -1166,6 +1166,17 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
       members: [{ id: 'admin-' + Date.now(), displayName: profileName || 'Team Admin', role: 'admin' as const, joinedAt: Date.now() }],
       joinedAt: Date.now(),
     }] : [];
+
+    // Persist profile so SettingsForm (which reads puh_profile) reflects it immediately.
+    try {
+      const existing = JSON.parse(localStorage.getItem('puh_profile') ?? 'null') ?? {};
+      localStorage.setItem('puh_profile', JSON.stringify({
+        ...existing,
+        ...(profileName && { displayName: profileName }),
+        ...(createdTeamName && { team: createdTeamName }),
+      }));
+    } catch {}
+
     onComplete({
       experienceLevel: fitnessLevel,
       enabledExercises,
