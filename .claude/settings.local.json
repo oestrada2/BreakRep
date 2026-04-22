@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(node -e \"const p = require\\('./node_modules/tailwindcss/package.json'\\); console.log\\(p.version\\)\")",
+      "Bash(node -e \"require\\('./node_modules/autoprefixer/package.json'\\); console.log\\('ok'\\)\")",
+      "Bash(npx next:*)",
+      "Bash(xargs ls *)",
+      "Bash(xargs grep *)"
+    ]
+  }
+}

@@ -1,0 +1,222 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Theme: dark (default) ─────────────────────────────────────────────── */
+:root {
+  --c0:  #060F1A;
+  --c1:  #0B1C2D;
+  --c2:  #0D1F33;
+  --c3:  #0D2A3A;
+  --c4:  #112A46;
+  --c5:  #163A5F;
+  --c6:  #1E3A5F;
+  --ct0: #EAF2FF;
+  --ct1: #A9C1E8;
+  --ct2: #4A6480;
+  --ca:  #38BDF8;
+}
+
+/* ── Theme: light ──────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --c0:  #F4F7FC;
+  --c1:  #EFF5FF;
+  --c2:  #FFFFFF;
+  --c3:  #D8E8F8;
+  --c4:  #E0EEFF;
+  --c5:  #B8D0EE;
+  --c6:  #A0BDD8;
+  --ct0: #0B1C2D;
+  --ct1: #2C5080;
+  --ct2: #5870A0;
+  --ca:  #0369A1;
+}
+
+/* ── Theme: midnight ───────────────────────────────────────────────────── */
+[data-theme="midnight"] {
+  --c0:  #08051A;
+  --c1:  #0F0B2A;
+  --c2:  #140E35;
+  --c3:  #1A1340;
+  --c4:  #221850;
+  --c5:  #2D2068;
+  --c6:  #392880;
+  --ct0: #EEE8FF;
+  --ct1: #B8A8F0;
+  --ct2: #6655AA;
+  --ca:  #A78BFA;
+}
+
+/* ── Theme: ocean ──────────────────────────────────────────────────────── */
+[data-theme="ocean"] {
+  --c0:  #031218;
+  --c1:  #051E28;
+  --c2:  #062430;
+  --c3:  #082E3C;
+  --c4:  #0A3A4A;
+  --c5:  #0D4D62;
+  --c6:  #106278;
+  --ct0: #D0F4FF;
+  --ct1: #70CFE8;
+  --ct2: #3A7A90;
+  --ca:  #22D3EE;
+}
+
+/* ── Theme: forest ─────────────────────────────────────────────────────── */
+[data-theme="forest"] {
+  --c0:  #050E08;
+  --c1:  #091810;
+  --c2:  #0B1E13;
+  --c3:  #0E261A;
+  --c4:  #112F20;
+  --c5:  #163E2A;
+  --c6:  #1C4F34;
+  --ct0: #DAFAE5;
+  --ct1: #7DD99A;
+  --ct2: #3A7050;
+  --ca:  #4ADE80;
+}
+
+
+/* ── Theme: carbon ─────────────────────────────────────────────────────── */
+[data-theme="carbon"] {
+  --c0:  #080808;
+  --c1:  #111111;
+  --c2:  #181818;
+  --c3:  #202020;
+  --c4:  #2A2A2A;
+  --c5:  #363636;
+  --c6:  #444444;
+  --ct0: #F2F2F2;
+  --ct1: #A8A8A8;
+  --ct2: #606060;
+  --ca:  #60A5FA;
+}
+
+/* ── Theme: rose ───────────────────────────────────────────────────────── */
+[data-theme="rose"] {
+  --c0:  #0F0509;
+  --c1:  #1A0912;
+  --c2:  #200B16;
+  --c3:  #2C1020;
+  --c4:  #38142A;
+  --c5:  #4A1A36;
+  --c6:  #5E2244;
+  --ct0: #FFE0EE;
+  --ct1: #F0A0C0;
+  --ct2: #8A4060;
+  --ca:  #F472B6;
+}
+
+
+/* ── Theme: aurora (gradient) ──────────────────────────────────────────── */
+[data-theme="aurora"] {
+  --c0:  transparent;
+  --c1:  transparent;
+  --c2:  rgba(8, 28, 48, 0.82);
+  --c3:  rgba(10, 35, 58, 0.78);
+  --c4:  rgba(14, 45, 70, 0.88);
+  --c5:  rgba(20, 58, 88, 0.92);
+  --c6:  rgba(28, 72, 105, 0.88);
+  --ct0: #D8FFF6;
+  --ct1: #6EDDC8;
+  --ct2: #2A7A70;
+  --ca:  #00FFA3;
+}
+[data-theme="aurora"] body {
+  background: linear-gradient(160deg, #030E16 0%, #052A3A 28%, #0A1845 55%, #08102C 80%, #030C1C 100%);
+  background-attachment: fixed;
+}
+
+/* ── Theme: candy (gradient) ───────────────────────────────────────────── */
+[data-theme="candy"] {
+  --c0:  transparent;
+  --c1:  transparent;
+  --c2:  rgba(28, 10, 48, 0.82);
+  --c3:  rgba(36, 12, 60, 0.78);
+  --c4:  rgba(46, 16, 75, 0.88);
+  --c5:  rgba(60, 22, 96, 0.92);
+  --c6:  rgba(76, 28, 118, 0.88);
+  --ct0: #FFE8FF;
+  --ct1: #E0A0F8;
+  --ct2: #9050C0;
+  --ca:  #FF60FF;
+}
+[data-theme="candy"] body {
+  background: linear-gradient(135deg, #0E0618 0%, #1A0830 30%, #200835 60%, #160628 85%, #0C0418 100%);
+  background-attachment: fixed;
+}
+
+/* ── Theme: dusk (gradient) ────────────────────────────────────────────── */
+[data-theme="dusk"] {
+  --c0:  transparent;
+  --c1:  transparent;
+  --c2:  rgba(38, 12, 18, 0.82);
+  --c3:  rgba(48, 15, 22, 0.78);
+  --c4:  rgba(60, 18, 28, 0.88);
+  --c5:  rgba(76, 24, 36, 0.92);
+  --c6:  rgba(94, 30, 45, 0.88);
+  --ct0: #FFE8E0;
+  --ct1: #F8A898;
+  --ct2: #A85060;
+  --ca:  #FF6B6B;
+}
+[data-theme="dusk"] body {
+  background: linear-gradient(160deg, #0E0608 0%, #200A10 25%, #1E0818 55%, #120610 80%, #0C0510 100%);
+  background-attachment: fixed;
+}
+
+/* ── Theme: nebula (gradient) ──────────────────────────────────────────── */
+[data-theme="nebula"] {
+  --c0:  transparent;
+  --c1:  transparent;
+  --c2:  rgba(20, 8, 52, 0.82);
+  --c3:  rgba(26, 10, 66, 0.78);
+  --c4:  rgba(36, 14, 88, 0.88);
+  --c5:  rgba(50, 20, 112, 0.92);
+  --c6:  rgba(66, 28, 138, 0.88);
+  --ct0: #EDE0FF;
+  --ct1: #C4A0F8;
+  --ct2: #7040B0;
+  --ca:  #A855F7;
+}
+[data-theme="nebula"] body {
+  background: linear-gradient(160deg, #04020E 0%, #0C0628 28%, #160840 55%, #0E0630 80%, #06020E 100%);
+  background-attachment: fixed;
+}
+
+/* ── Theme: bluegray (gradient) ────────────────────────────────────────── */
+[data-theme="bluegray"] {
+  --c0:  transparent;
+  --c1:  transparent;
+  --c2:  rgba(18, 28, 42, 0.82);
+  --c3:  rgba(22, 34, 52, 0.78);
+  --c4:  rgba(28, 44, 66, 0.88);
+  --c5:  rgba(36, 56, 82, 0.92);
+  --c6:  rgba(46, 70, 100, 0.88);
+  --ct0: #E2E8F0;
+  --ct1: #94A3B8;
+  --ct2: #475569;
+  --ca:  #7EAFD4;
+}
+[data-theme="bluegray"] body {
+  background: linear-gradient(160deg, #060A10 0%, #0C1420 28%, #101C2E 55%, #0A1220 80%, #060A10 100%);
+  background-attachment: fixed;
+}
+
+html, body {
+  background-color: var(--c1);
+  color: var(--ct0);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+input[type=number]::-webkit-inner-spin-button {
+  opacity: 0.5;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
