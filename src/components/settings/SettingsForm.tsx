@@ -264,12 +264,15 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification }
                   placeholder="https://..."
                   className="w-full bg-[var(--c4)] border border-[var(--c5)] rounded-xl px-3 py-2 text-xs text-[var(--ct0)] placeholder-[var(--ct2)] focus:border-[#FACC15]/50 outline-none transition-colors"
                 />
-                {(session?.user as any)?.image && (
-                  <button
-                    onClick={() => setDraft(d => ({ ...d, avatarUrl: (session.user as any).image }))}
-                    className="mt-1 text-[10px] text-[var(--ca)] hover:underline"
-                  >Use Google photo</button>
-                )}
+                {(session?.user as any)?.image && (() => {
+                  const googlePhoto = (session!.user as any).image as string;
+                  return (
+                    <button
+                      onClick={() => setDraft(d => ({ ...d, avatarUrl: googlePhoto }))}
+                      className="mt-1 text-[10px] text-[var(--ca)] hover:underline"
+                    >Use Google photo</button>
+                  );
+                })()}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
