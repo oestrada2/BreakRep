@@ -305,6 +305,7 @@ function CreateTeamSheet({ onClose, onCreated }: { onClose: () => void; onCreate
 // ── Team card ─────────────────────────────────────────────────────────────────
 function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated: Team) => void; onLeave: () => void }) {
   const [codeCopied, setCodeCopied] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   const adminMembers  = team.members.filter(m => m.role === 'admin');
   const activeMembers = team.members.filter(m => m.role === 'member');
@@ -331,17 +332,20 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
   }
 
   return (
-    <div className="mb-6">
+    <div className="mb-4">
       {/* Team header */}
       <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-4 flex items-center justify-between mb-1">
-        <div>
-          <p className="text-[var(--ct0)] text-base font-bold">{team.name}</p>
-          <p className="text-[var(--ct2)] text-xs mt-0.5">
-            {totalActive} member{totalActive !== 1 ? 's' : ''}
-            {pending.length > 0 && <span className="text-amber-400"> · {pending.length} pending</span>}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+        <button onClick={() => setCollapsed(c => !c)} className="flex items-center gap-2 flex-1 min-w-0 text-left">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className={`shrink-0 text-[var(--ct2)] transition-transform duration-200 ${collapsed ? '-rotate-90' : ''}`}><polyline points="6 9 12 15 18 9"/></svg>
+          <div className="min-w-0">
+            <p className="text-[var(--ct0)] text-base font-bold truncate">{team.name}</p>
+            <p className="text-[var(--ct2)] text-xs mt-0.5">
+              {totalActive} member{totalActive !== 1 ? 's' : ''}
+              {pending.length > 0 && <span className="text-amber-400"> · {pending.length} pending</span>}
+            </p>
+          </div>
+        </button>
+        <div className="flex items-center gap-2 shrink-0">
           {team.isAdmin && (
             <div className="flex items-center gap-1.5">
               {/* Share */}
@@ -362,54 +366,58 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
         </div>
       </div>
 
-      {/* Admin pending alert */}
-      {team.isAdmin && pending.length > 0 && (
-        <div className="bg-amber-500/10 border border-amber-500/25 rounded-2xl px-4 py-3 flex items-center gap-3 mb-1">
-          <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          </div>
-          <p className="text-amber-300 text-sm flex-1">
-            <span className="font-semibold">{pending.length} request{pending.length !== 1 ? 's' : ''}</span> waiting for your approval
-          </p>
-        </div>
-      )}
-
-      {/* Admins */}
-      <SectionLabel title="Admin" />
-      <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl overflow-hidden mb-1">
-        {adminMembers.length > 0 ? adminMembers.map(m => <MemberCard key={m.id} member={m} isAdmin={false} />) : <p className="px-4 py-3.5 text-[var(--ct2)] text-sm italic">No admin found.</p>}
-      </div>
-
-      {/* Members */}
-      <SectionLabel title="Members" count={activeMembers.length} />
-      <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl overflow-hidden mb-1">
-        {activeMembers.length > 0 ? (
-          activeMembers.map(m => (
-            <MemberCard key={m.id} member={m} isAdmin={team.isAdmin} onRemove={team.isAdmin ? () => updateMembers(team.members.filter(x => x.id !== m.id)) : undefined} />
-          ))
-        ) : (
-          <div className="px-4 py-5 text-center">
-            <p className="text-[var(--ct2)] text-sm">No members yet.</p>
-            {team.isAdmin && <p className="text-[var(--ct2)] text-xs mt-1">Share code <span className="text-[#FACC15] font-bold tracking-widest">{team.code}</span> to invite people.</p>}
-          </div>
-        )}
-      </div>
-
-      {/* Pending (admin only) */}
-      {team.isAdmin && (
+      {!collapsed && (
         <>
-          <SectionLabel title="Pending Requests" count={pending.length} />
-          <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl overflow-hidden">
-            {pending.length > 0 ? pending.map(m => (
-              <MemberCard
-                key={m.id} member={m} isAdmin
-                onApprove={() => updateMembers(team.members.map(x => x.id === m.id ? { ...x, role: 'member' as const } : x))}
-                onReject={() => updateMembers(team.members.filter(x => x.id !== m.id))}
-              />
-            )) : (
-              <p className="px-4 py-5 text-center text-[var(--ct2)] text-sm">No pending requests.</p>
+          {/* Admin pending alert */}
+          {team.isAdmin && pending.length > 0 && (
+            <div className="bg-amber-500/10 border border-amber-500/25 rounded-2xl px-4 py-3 flex items-center gap-3 mb-1">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </div>
+              <p className="text-amber-300 text-sm flex-1">
+                <span className="font-semibold">{pending.length} request{pending.length !== 1 ? 's' : ''}</span> waiting for your approval
+              </p>
+            </div>
+          )}
+
+          {/* Admins */}
+          <SectionLabel title="Admin" />
+          <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl overflow-hidden mb-1">
+            {adminMembers.length > 0 ? adminMembers.map(m => <MemberCard key={m.id} member={m} isAdmin={false} />) : <p className="px-4 py-3.5 text-[var(--ct2)] text-sm italic">No admin found.</p>}
+          </div>
+
+          {/* Members */}
+          <SectionLabel title="Members" count={activeMembers.length} />
+          <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl overflow-hidden mb-1">
+            {activeMembers.length > 0 ? (
+              activeMembers.map(m => (
+                <MemberCard key={m.id} member={m} isAdmin={team.isAdmin} onRemove={team.isAdmin ? () => updateMembers(team.members.filter(x => x.id !== m.id)) : undefined} />
+              ))
+            ) : (
+              <div className="px-4 py-5 text-center">
+                <p className="text-[var(--ct2)] text-sm">No members yet.</p>
+                {team.isAdmin && <p className="text-[var(--ct2)] text-xs mt-1">Share code <span className="text-[#FACC15] font-bold tracking-widest">{team.code}</span> to invite people.</p>}
+              </div>
             )}
           </div>
+
+          {/* Pending (admin only) */}
+          {team.isAdmin && (
+            <>
+              <SectionLabel title="Pending Requests" count={pending.length} />
+              <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl overflow-hidden">
+                {pending.length > 0 ? pending.map(m => (
+                  <MemberCard
+                    key={m.id} member={m} isAdmin
+                    onApprove={() => updateMembers(team.members.map(x => x.id === m.id ? { ...x, role: 'member' as const } : x))}
+                    onReject={() => updateMembers(team.members.filter(x => x.id !== m.id))}
+                  />
+                )) : (
+                  <p className="px-4 py-5 text-center text-[var(--ct2)] text-sm">No pending requests.</p>
+                )}
+              </div>
+            </>
+          )}
         </>
       )}
     </div>
