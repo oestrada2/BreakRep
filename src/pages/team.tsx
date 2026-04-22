@@ -239,8 +239,12 @@ function CreateTeamSheet({ onClose, onCreated }: { onClose: () => void; onCreate
   const handleCreate = async () => {
     if (!teamName.trim()) return;
     const profileName = (() => {
-      try { return JSON.parse(localStorage.getItem('puh_profile') ?? 'null')?.displayName || 'Admin'; }
-      catch { return 'Admin'; }
+      try {
+        const p = JSON.parse(localStorage.getItem('puh_profile') ?? 'null');
+        if (!p) return 'Admin';
+        const fullName = `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim();
+        return fullName || p.displayName || 'Admin';
+      } catch { return 'Admin'; }
     })();
     const team: Team = {
       id: 'team-' + Date.now(),

@@ -1033,10 +1033,23 @@ function JoinTeamSheet({ onClose }: { onClose: () => void }) {
 }
 
 // ─── Screen 6: Profile setup ──────────────────────────────────────────────────
-function ProfileScreen({ onFinish, onBack, onTeamCreated }: { onFinish: (name: string) => void; onBack: () => void; onTeamCreated: (name: string, code: string) => void }) {
-  const [name, setName] = useState('');
+function ProfileScreen({ onFinish, onBack, onTeamCreated }: { onFinish: (displayName: string, firstName: string, lastName: string) => void; onBack: () => void; onTeamCreated: (name: string, code: string) => void }) {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName]   = useState('');
+  const [name, setName]           = useState('');
   const [showTeamSheet, setShowTeamSheet] = useState(false);
   const [showJoinSheet, setShowJoinSheet] = useState(false);
+
+  // Auto-populate display name from first + last
+  const handleFirstName = (v: string) => {
+    setFirstName(v);
+    setName(`${v} ${lastName}`.trim());
+  };
+  const handleLastName = (v: string) => {
+    setLastName(v);
+    setName(`${firstName} ${v}`.trim());
+  };
+
   return (
     <>
       <Screen>
@@ -1058,9 +1071,21 @@ function ProfileScreen({ onFinish, onBack, onTeamCreated }: { onFinish: (name: s
             </div>
           </div>
           <div className="w-full h-px bg-[var(--c5)]" />
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide">First name</span>
+              <input type="text" placeholder="First" value={firstName} onChange={e => handleFirstName(e.target.value)}
+                className="mt-1.5 w-full bg-[var(--c4)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#FACC15] outline-none text-sm transition-colors" />
+            </label>
+            <label className="block">
+              <span className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide">Last name</span>
+              <input type="text" placeholder="Last" value={lastName} onChange={e => handleLastName(e.target.value)}
+                className="mt-1.5 w-full bg-[var(--c4)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#FACC15] outline-none text-sm transition-colors" />
+            </label>
+          </div>
           <label className="block">
             <span className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide">Display name</span>
-            <input type="text" placeholder="Your name" value={name} onChange={e => setName(e.target.value)}
+            <input type="text" placeholder="How you appear to teammates" value={name} onChange={e => setName(e.target.value)}
               className="mt-1.5 w-full bg-[var(--c4)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#FACC15] outline-none text-sm transition-colors" />
           </label>
         </div>
@@ -1101,7 +1126,7 @@ function ProfileScreen({ onFinish, onBack, onTeamCreated }: { onFinish: (name: s
           </button>
         </div>
 
-        <Button variant="primary" size="lg" className="w-full" onClick={() => onFinish(name)}>Let's go →</Button>
+        <Button variant="primary" size="lg" className="w-full" onClick={() => onFinish(name, firstName, lastName)}>Let's go →</Button>
         <StepDots total={7} current={6} />
       </Screen>
 
@@ -1157,7 +1182,7 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
     setEnabledExercises(prev => { const next = { ...prev }; delete next[key]; return next; });
   };
 
-  const finish = (profileName = '') => {
+  const finish = (profileName = '', firstName = '', lastName = '') => {
     const teams: Team[] = createdTeamName && createdTeamCode ? [{
       id: 'team-' + Date.now(),
       name: createdTeamName,
@@ -1173,6 +1198,8 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
       localStorage.setItem('puh_profile', JSON.stringify({
         ...existing,
         ...(profileName && { displayName: profileName }),
+        ...(firstName && { firstName }),
+        ...(lastName && { lastName }),
         ...(createdTeamName && { team: createdTeamName }),
       }));
     } catch {}
@@ -1273,7 +1300,7 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
       {step === 1 && <HowItWorksScreen    onNext={() => setStep(2)} onSkip={() => setStep(2)} />}
       {step === 4 && <NotificationsScreen onNext={() => setStep(5)} onSkip={() => setStep(5)} onBack={() => setStep(3)} />}
       {step === 5 && <SignInScreen        onNext={() => setStep(6)} onBack={() => setStep(4)} />}
-      {step === 6 && <ProfileScreen       onFinish={(n) => finish(n)}         onBack={() => setStep(5)} onTeamCreated={(name, code) => { setCreatedTeamName(name); setCreatedTeamCode(code); }} />}
+      {step === 6 && <ProfileScreen       onFinish={(dn, fn, ln) => finish(dn, fn, ln)} onBack={() => setStep(5)} onTeamCreated={(name, code) => { setCreatedTeamName(name); setCreatedTeamCode(code); }} />}
     </>
   );
 }
