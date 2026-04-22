@@ -238,7 +238,15 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
     onUpdate({ ...team, members });
   }
 
-  function copyCode() {
+  async function shareCode() {
+    const text = `Join my BreakRep team "${team.name}"! Use code ${team.code}.`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `Join ${team.name} on BreakRep`, text });
+        return;
+      } catch {}
+    }
+    // Fallback: copy to clipboard
     navigator.clipboard.writeText(team.code).then(() => {
       setCodeCopied(true);
       setTimeout(() => setCodeCopied(false), 2000);
@@ -258,8 +266,11 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
         </div>
         <div className="flex items-center gap-2">
           {team.isAdmin && (
-            <button onClick={copyCode} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${codeCopied ? 'bg-[#22C55E]/10 border-[#22C55E]/30 text-[#22C55E]' : 'bg-[var(--c4)] border-[var(--c5)] text-[var(--ct1)] hover:border-[var(--ca)]/40'}`}>
-              {codeCopied ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg> : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>}
+            <button onClick={shareCode} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${codeCopied ? 'bg-[#22C55E]/10 border-[#22C55E]/30 text-[#22C55E]' : 'bg-[var(--c4)] border-[var(--c5)] text-[var(--ct1)] hover:border-[var(--ca)]/40'}`}>
+              {codeCopied
+                ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              }
               {codeCopied ? 'Copied!' : team.code}
             </button>
           )}
