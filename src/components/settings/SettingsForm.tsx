@@ -1,5 +1,6 @@
 import type { AppSettings, AlertStyle, ScheduleMode, ExperienceLevel, EnabledExercises, Team, NotificationSound } from '@/types';
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { NotificationService, NOTIFICATION_SOUNDS } from '@/lib/notifications';
 import { useTheme, THEMES } from '@/contexts/ThemeContext';
 
@@ -144,12 +145,14 @@ interface Profile {
   email: string;
   team: string;
   username: string;
+  avatarUrl?: string;
 }
 const DEFAULT_PROFILE: Profile = {
   displayName: 'Your Name',
   email: 'you@company.com',
   team: 'Engineering',
   username: '',
+  avatarUrl: '',
 };
 function loadProfile(): Profile {
   if (typeof window === 'undefined') return DEFAULT_PROFILE;
@@ -162,6 +165,7 @@ function loadProfile(): Profile {
 export function SettingsForm({ settings, onChange, onReset, onTestNotification }: SettingsFormProps) {
   const { progression: p, reminders: r } = settings;
   const { theme, setTheme } = useTheme();
+  const { data: session } = useSession();
 
   const [profile, setProfile] = useState<Profile>(DEFAULT_PROFILE);
   const [editingProfile, setEditingProfile] = useState(false);
@@ -177,9 +181,19 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification }
 
   useEffect(() => {
     const saved = loadProfile();
-    setProfile(saved);
-    setDraft(saved);
-  }, []);
+    const googleImage = (session?.user as any)?.image ?? '';
+    const googleEmail = (session?.user as any)?.email ?? '';
+    const merged: Profile = {
+      ...saved,
+      avatarUrl: saved.avatarUrl || googleImage,
+      email: saved.email && saved.email !== DEFAULT_PROFILE.email ? saved.email : (googleEmail || saved.email),
+    };
+    if (merged.avatarUrl !== saved.avatarUrl || merged.email !== saved.email) {
+      localStorage.setItem('puh_profile', JSON.stringify(merged));
+    }
+    setProfile(merged);
+    setDraft(merged);
+  }, [session]);
 
   function saveProfile() {
     setProfile(draft);
@@ -212,8 +226,11 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification }
       >
         {!editingProfile ? (
           <div className="px-4 py-4 flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--ca)] to-[#1D4ED8] flex items-center justify-center shrink-0">
-              <span className="text-white text-lg font-bold">{initials}</span>
+            <div className="w-14 h-14 rounded-2xl shrink-0 overflow-hidden bg-gradient-to-br from-[var(--ca)] to-[#1D4ED8] flex items-center justify-center">
+              {profile.avatarUrl
+                ? <img src={profile.avatarUrl} alt={profile.displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                : <span className="text-white text-lg font-bold">{initials}</span>
+              }
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[var(--ct0)] text-base font-semibold truncate">{profile.displayName}</p>
@@ -231,6 +248,30 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification }
           </div>
         ) : (
           <div className="px-4 py-4 space-y-3">
+            {/* Avatar preview + photo URL */}
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 rounded-2xl shrink-0 overflow-hidden bg-gradient-to-br from-[var(--ca)] to-[#1D4ED8] flex items-center justify-center">
+                {draft.avatarUrl
+                  ? <img src={draft.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  : <span className="text-white text-lg font-bold">{initials}</span>
+                }
+              </div>
+              <div className="flex-1">
+                <label className="text-[var(--ct2)] text-xs block mb-1">Photo URL</label>
+                <input
+                  value={draft.avatarUrl ?? ''}
+                  onChange={e => setDraft(d => ({ ...d, avatarUrl: e.target.value }))}
+                  placeholder="https://..."
+                  className="w-full bg-[var(--c4)] border border-[var(--c5)] rounded-xl px-3 py-2 text-xs text-[var(--ct0)] placeholder-[var(--ct2)] focus:border-[#FACC15]/50 outline-none transition-colors"
+                />
+                {(session?.user as any)?.image && (
+                  <button
+                    onClick={() => setDraft(d => ({ ...d, avatarUrl: (session.user as any).image }))}
+                    className="mt-1 text-[10px] text-[var(--ca)] hover:underline"
+                  >Use Google photo</button>
+                )}
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-[var(--ct2)] text-xs block mb-1">Display name</label>
