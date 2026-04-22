@@ -92,7 +92,7 @@ function SectionLabel({ title, count }: { title: string; count?: number }) {
 function JoinTeamSheet({ onClose, onJoined }: { onClose: () => void; onJoined: (team: Team) => void }) {
   const [tab, setTab] = useState<'search' | 'code'>('search');
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<{ id: string; name: string; code: string }[]>([]);
+  const [results, setResults] = useState<{ id: string; name: string; code: string; admin_name?: string }[]>([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<{ id: string; name: string; code: string } | null>(null);
   const [code, setCode] = useState('');
@@ -107,7 +107,7 @@ function JoinTeamSheet({ onClose, onJoined }: { onClose: () => void; onJoined: (
     setSearching(true);
     const { data } = await supabase
       .from('teams')
-      .select('id, name, code')
+      .select('id, name, code, admin_name')
       .ilike('name', `%${q.trim()}%`)
       .limit(8);
     setResults(data ?? []);
@@ -186,7 +186,7 @@ function JoinTeamSheet({ onClose, onJoined }: { onClose: () => void; onJoined: (
                           className={`w-full text-left px-3 py-2.5 rounded-xl border text-sm transition-colors ${selected?.id === r.id ? 'border-[#22C55E]/50 bg-[#22C55E]/10 text-[var(--ct0)]' : 'border-[var(--c5)] bg-[var(--c2)] text-[var(--ct1)] hover:border-[var(--ct2)]'}`}
                         >
                           <span className="font-semibold">{r.name}</span>
-                          <span className="text-[var(--ct2)] text-xs ml-2">#{r.code}</span>
+                          {r.admin_name && <span className="text-[var(--ct2)] text-xs ml-2">Admin: {r.admin_name}</span>}
                         </button>
                       ))}
                     </div>
@@ -238,16 +238,20 @@ function CreateTeamSheet({ onClose, onCreated }: { onClose: () => void; onCreate
 
   const handleCreate = async () => {
     if (!teamName.trim()) return;
+    const profileName = (() => {
+      try { return JSON.parse(localStorage.getItem('puh_profile') ?? 'null')?.displayName || 'Admin'; }
+      catch { return 'Admin'; }
+    })();
     const team: Team = {
       id: 'team-' + Date.now(),
       name: teamName.trim(),
       code: generateTeamCode(),
       isAdmin: true,
-      members: [{ id: 'admin-' + Date.now(), displayName: 'You', role: 'admin', joinedAt: Date.now() }],
+      members: [{ id: 'admin-' + Date.now(), displayName: profileName, role: 'admin', joinedAt: Date.now() }],
       joinedAt: Date.now(),
     };
     // Register in Supabase so others can search for it
-    await supabase.from('teams').upsert({ id: team.id, name: team.name, code: team.code });
+    await supabase.from('teams').upsert({ id: team.id, name: team.name, code: team.code, admin_name: profileName });
     setCreated(team);
     onCreated(team);
   };
