@@ -3,6 +3,7 @@ import { NavTabs } from '@/components/layout/NavTabs';
 import type { Team, TeamMember } from '@/types';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import { supabase } from '@/lib/supabase';
 
 function formatDate(ts: number) {
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -89,19 +90,40 @@ function SectionLabel({ title, count }: { title: string; count?: number }) {
 
 // ── Join sheet ────────────────────────────────────────────────────────────────
 function JoinTeamSheet({ onClose, onJoined }: { onClose: () => void; onJoined: (team: Team) => void }) {
+  const [tab, setTab] = useState<'search' | 'code'>('search');
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<{ id: string; name: string; code: string }[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [selected, setSelected] = useState<{ id: string; name: string; code: string } | null>(null);
   const [code, setCode] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [joined, setJoined] = useState(false);
   const [error, setError] = useState('');
 
+  const handleSearch = async (q: string) => {
+    setQuery(q);
+    setSelected(null);
+    if (q.trim().length < 2) { setResults([]); return; }
+    setSearching(true);
+    const { data } = await supabase
+      .from('teams')
+      .select('id, name, code')
+      .ilike('name', `%${q.trim()}%`)
+      .limit(8);
+    setResults(data ?? []);
+    setSearching(false);
+  };
+
   const handleJoin = () => {
-    const trimmed = code.trim().toUpperCase();
-    if (trimmed.length < 4) { setError('Please enter a valid invite code.'); return; }
+    const teamCode = tab === 'search' ? selected?.code ?? '' : code.trim().toUpperCase();
+    const teamName = tab === 'search' ? selected?.name ?? `Team ${teamCode}` : `Team ${teamCode}`;
+    const teamId   = tab === 'search' ? selected?.id  ?? ('team-' + Date.now()) : ('team-' + Date.now());
+    if (!teamCode || teamCode.length < 4) { setError('Please select a team or enter a valid code.'); return; }
     if (!displayName.trim()) { setError('Please enter your display name.'); return; }
     const newTeam: Team = {
-      id: 'team-' + Date.now(),
-      name: `Team ${trimmed}`,
-      code: trimmed,
+      id: teamId,
+      name: teamName,
+      code: teamCode,
       isAdmin: false,
       members: [{ id: 'member-' + Date.now(), displayName: displayName.trim(), role: 'pending', joinedAt: Date.now() }],
       joinedAt: Date.now(),
@@ -114,29 +136,82 @@ function JoinTeamSheet({ onClose, onJoined }: { onClose: () => void; onJoined: (
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="w-full max-w-sm bg-[var(--c1)] border border-[var(--c5)] rounded-3xl p-6 flex flex-col gap-5">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[var(--ct0)] text-lg font-bold">{joined ? "Request sent! 🎉" : 'Join a team'}</p>
-            <p className="text-[var(--ct2)] text-xs mt-0.5">{joined ? "Waiting for admin approval" : 'Enter the invite code shared by your team'}</p>
+            <p className="text-[var(--ct0)] text-lg font-bold">{joined ? 'Request sent! 🎉' : 'Join a team'}</p>
+            <p className="text-[var(--ct2)] text-xs mt-0.5">{joined ? 'Waiting for admin approval' : 'Search by name or enter an invite code'}</p>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-[var(--c4)] flex items-center justify-center text-[var(--ct2)] hover:text-[var(--ct0)] transition-colors">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
+
         {!joined ? (
           <>
+            {/* Tabs */}
+            <div className="flex gap-1 bg-[var(--c2)] p-1 rounded-xl">
+              {(['search', 'code'] as const).map(t => (
+                <button key={t} onClick={() => { setTab(t); setError(''); }} className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors ${tab === t ? 'bg-[var(--c4)] text-[var(--ct0)]' : 'text-[var(--ct2)] hover:text-[var(--ct1)]'}`}>
+                  {t === 'search' ? '🔍 Search' : '# Enter Code'}
+                </button>
+              ))}
+            </div>
+
             <div className="flex flex-col gap-3">
+              {/* Display name — always shown */}
               <div>
                 <label className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide block mb-1.5">Your display name</label>
-                <input type="text" autoFocus placeholder="e.g. Alex Rivera" value={displayName} onChange={e => { setDisplayName(e.target.value); setError(''); }} className="w-full bg-[var(--c2)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#22C55E] outline-none text-sm transition-colors" />
+                <input type="text" placeholder="e.g. Alex Rivera" value={displayName} onChange={e => { setDisplayName(e.target.value); setError(''); }} className="w-full bg-[var(--c2)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#22C55E] outline-none text-sm transition-colors" />
               </div>
-              <div>
-                <label className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide block mb-1.5">Invite code</label>
-                <input type="text" placeholder="e.g. X4K9MZ" value={code} onChange={e => { setCode(e.target.value.toUpperCase()); setError(''); }} onKeyDown={e => { if (e.key === 'Enter') handleJoin(); }} maxLength={8} className="w-full bg-[var(--c2)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#22C55E] outline-none text-sm tracking-widest font-bold uppercase transition-colors text-center" />
-              </div>
+
+              {tab === 'search' ? (
+                <div>
+                  <label className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide block mb-1.5">Team name</label>
+                  <input
+                    autoFocus
+                    type="text"
+                    placeholder="Search teams…"
+                    value={query}
+                    onChange={e => handleSearch(e.target.value)}
+                    className="w-full bg-[var(--c2)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#22C55E] outline-none text-sm transition-colors"
+                  />
+                  {searching && <p className="text-[var(--ct2)] text-xs mt-2">Searching…</p>}
+                  {results.length > 0 && (
+                    <div className="mt-2 flex flex-col gap-1 max-h-40 overflow-y-auto">
+                      {results.map(r => (
+                        <button
+                          key={r.id}
+                          onClick={() => setSelected(r)}
+                          className={`w-full text-left px-3 py-2.5 rounded-xl border text-sm transition-colors ${selected?.id === r.id ? 'border-[#22C55E]/50 bg-[#22C55E]/10 text-[var(--ct0)]' : 'border-[var(--c5)] bg-[var(--c2)] text-[var(--ct1)] hover:border-[var(--ct2)]'}`}
+                        >
+                          <span className="font-semibold">{r.name}</span>
+                          <span className="text-[var(--ct2)] text-xs ml-2">#{r.code}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {query.length >= 2 && !searching && results.length === 0 && (
+                    <p className="text-[var(--ct2)] text-xs mt-2">No teams found. Try a different name or use an invite code.</p>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <label className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide block mb-1.5">Invite code</label>
+                  <input type="text" placeholder="e.g. X4K9MZ" value={code} onChange={e => { setCode(e.target.value.toUpperCase()); setError(''); }} onKeyDown={e => { if (e.key === 'Enter') handleJoin(); }} maxLength={8} className="w-full bg-[var(--c2)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#22C55E] outline-none text-sm tracking-widest font-bold uppercase transition-colors text-center" />
+                </div>
+              )}
+
               {error && <p className="text-[#EF4444] text-xs">{error}</p>}
             </div>
-            <button onClick={handleJoin} disabled={!code.trim() || !displayName.trim()} className="w-full py-3.5 rounded-xl font-bold text-sm bg-[#22C55E] text-[#0B1C2D] hover:bg-[#16A34A] transition-colors disabled:opacity-40 disabled:cursor-not-allowed">Request to join</button>
+
+            <button
+              onClick={handleJoin}
+              disabled={!displayName.trim() || (tab === 'search' ? !selected : code.trim().length < 4)}
+              className="w-full py-3.5 rounded-xl font-bold text-sm bg-[#22C55E] text-[#0B1C2D] hover:bg-[#16A34A] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Request to join
+            </button>
           </>
         ) : (
           <>
@@ -144,7 +219,7 @@ function JoinTeamSheet({ onClose, onJoined }: { onClose: () => void; onJoined: (
               <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-xl shrink-0">⏳</div>
               <div>
                 <p className="text-amber-400 text-sm font-semibold">Request sent</p>
-                <p className="text-[var(--ct2)] text-xs mt-0.5">Waiting for admin approval for code <span className="font-bold tracking-widest text-[var(--ct1)]">{code.trim().toUpperCase()}</span></p>
+                <p className="text-[var(--ct2)] text-xs mt-0.5">Waiting for admin approval</p>
               </div>
             </div>
             <button onClick={onClose} className="w-full py-3 rounded-xl text-sm font-semibold text-[var(--ct1)] hover:text-[var(--ct0)] transition-colors">Done</button>
@@ -161,7 +236,7 @@ function CreateTeamSheet({ onClose, onCreated }: { onClose: () => void; onCreate
   const [created, setCreated] = useState<Team | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!teamName.trim()) return;
     const team: Team = {
       id: 'team-' + Date.now(),
@@ -171,6 +246,8 @@ function CreateTeamSheet({ onClose, onCreated }: { onClose: () => void; onCreate
       members: [{ id: 'admin-' + Date.now(), displayName: 'You', role: 'admin', joinedAt: Date.now() }],
       joinedAt: Date.now(),
     };
+    // Register in Supabase so others can search for it
+    await supabase.from('teams').upsert({ id: team.id, name: team.name, code: team.code });
     setCreated(team);
     onCreated(team);
   };
