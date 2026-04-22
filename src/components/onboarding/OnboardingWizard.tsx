@@ -1085,8 +1085,9 @@ function ProfileScreen({ onFinish, onBack, onTeamCreated }: { onFinish: (display
           </div>
           <label className="block">
             <span className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide">Display name</span>
+            <p className="text-[var(--ct2)] text-xs mt-0.5 mb-1.5">This is how you'll appear to teammates — feel free to use a nickname or whatever fits you best.</p>
             <input type="text" placeholder="How you appear to teammates" value={name} onChange={e => setName(e.target.value)}
-              className="mt-1.5 w-full bg-[var(--c4)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#FACC15] outline-none text-sm transition-colors" />
+              className="w-full bg-[var(--c4)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#FACC15] outline-none text-sm transition-colors" />
           </label>
         </div>
 
