@@ -22,24 +22,53 @@ export function generateDaySessions(
   // Build the list of {hour, minute} slots for the day
   const slots: { hour: number; minute: number }[] = [];
 
+  const overnight = r.endHour < r.startHour;
+
   if (r.scheduleMode === 'custom') {
-    const minutes = [...(r.customMinutes ?? [])].sort((a, b) => a - b);
+    const minutes  = [...(r.customMinutes ?? [])].sort((a, b) => a - b);
     const startTotal = r.startHour * 60 + (r.startMinute ?? 0);
     const endTotal   = r.endHour   * 60 + (r.endMinute   ?? 0);
-    for (let hour = r.startHour; hour <= r.endHour; hour++) {
-      for (const minute of minutes) {
-        const total = hour * 60 + minute;
-        if (total >= startTotal && total <= endTotal) {
-          slots.push({ hour, minute });
+
+    if (overnight) {
+      // Early morning block: 0:00 → endHour:endMinute
+      for (let hour = 0; hour <= r.endHour; hour++) {
+        for (const minute of minutes) {
+          if (hour * 60 + minute <= endTotal) slots.push({ hour, minute });
+        }
+      }
+      // Evening block: startHour:startMinute → 23:59
+      for (let hour = r.startHour; hour <= 23; hour++) {
+        for (const minute of minutes) {
+          if (hour * 60 + minute >= startTotal) slots.push({ hour, minute });
+        }
+      }
+    } else {
+      for (let hour = r.startHour; hour <= r.endHour; hour++) {
+        for (const minute of minutes) {
+          const total = hour * 60 + minute;
+          if (total >= startTotal && total <= endTotal) slots.push({ hour, minute });
         }
       }
     }
   } else {
     const startMinute = r.startMinute ?? 0;
-    const endMinute = r.endMinute ?? 0;
-    for (let hour = r.startHour; hour <= r.endHour; hour++) {
-      if (hour === r.endHour && startMinute > endMinute) continue;
-      slots.push({ hour, minute: startMinute });
+    const endMinute   = r.endMinute   ?? 0;
+
+    if (overnight) {
+      // Early morning block: 0:00 → endHour
+      for (let hour = 0; hour <= r.endHour; hour++) {
+        if (hour === r.endHour && startMinute > endMinute) continue;
+        slots.push({ hour, minute: startMinute });
+      }
+      // Evening block: startHour → 23:00
+      for (let hour = r.startHour; hour <= 23; hour++) {
+        slots.push({ hour, minute: startMinute });
+      }
+    } else {
+      for (let hour = r.startHour; hour <= r.endHour; hour++) {
+        if (hour === r.endHour && startMinute > endMinute) continue;
+        slots.push({ hour, minute: startMinute });
+      }
     }
   }
 
