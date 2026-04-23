@@ -915,33 +915,22 @@ function TeamSheet({ onClose, onTeamCreated }: { onClose: () => void; onTeamCrea
 // ─── Join team sheet ─────────────────────────────────────────────────────────
 function JoinTeamSheet({ onClose }: { onClose: () => void }) {
   const [code, setCode] = useState('');
-  const [displayName, setDisplayName] = useState('');
   const [joined, setJoined] = useState(false);
   const [error, setError] = useState('');
+
+  // Pull display name from profile fields set earlier in the wizard
+  const displayName = (() => {
+    try {
+      const p = JSON.parse(localStorage.getItem('puh_profile') ?? 'null');
+      if (!p) return '';
+      const fullName = `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim();
+      return fullName || p.displayName || '';
+    } catch { return ''; }
+  })();
 
   const handleJoin = () => {
     const trimmed = code.trim().toUpperCase();
     if (trimmed.length < 4) { setError('Please enter a valid invite code.'); return; }
-    if (!displayName.trim()) { setError('Please enter your display name.'); return; }
-    // Add a pending team entry to the user's teams in localStorage.
-    // In production this would be a backend API call.
-    try {
-      const raw = localStorage.getItem('puh_settings');
-      if (raw) {
-        const s = JSON.parse(raw);
-        const teams: any[] = s.teams ?? [];
-        teams.push({
-          id: 'team-' + Date.now(),
-          name: `Team ${trimmed}`,
-          code: trimmed,
-          isAdmin: false,
-          members: [{ id: 'member-' + Date.now(), displayName: displayName.trim(), role: 'pending', joinedAt: Date.now() }],
-          joinedAt: Date.now(),
-        });
-        s.teams = teams;
-        localStorage.setItem('puh_settings', JSON.stringify(s));
-      }
-    } catch {}
     setError('');
     setJoined(true);
   };
@@ -957,10 +946,10 @@ function JoinTeamSheet({ onClose }: { onClose: () => void }) {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[var(--ct0)] text-lg font-bold">
-              {joined ? "You're in! 🎉" : 'Join a team'}
+              {joined ? "Request sent! 🎉" : 'Join a team'}
             </p>
             <p className="text-[var(--ct2)] text-xs mt-0.5">
-              {joined ? "You've joined the team successfully" : 'Enter the invite code shared by your team'}
+              {joined ? 'Waiting for admin approval' : 'Enter the invite code shared by your team'}
             </p>
           </div>
           <button
@@ -973,39 +962,25 @@ function JoinTeamSheet({ onClose }: { onClose: () => void }) {
 
         {!joined ? (
           <>
-            <div className="flex flex-col gap-3">
-              <div>
-                <label className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide block mb-1.5">
-                  Your display name
-                </label>
-                <input
-                  type="text"
-                  autoFocus
-                  placeholder="e.g. Alex Rivera"
-                  value={displayName}
-                  onChange={e => { setDisplayName(e.target.value); setError(''); }}
-                  className="w-full bg-[var(--c2)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#22C55E] outline-none text-sm transition-colors"
-                />
-              </div>
-              <div>
-                <label className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide block mb-1.5">
-                  Invite code
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. X4K9MZ"
-                  value={code}
-                  onChange={e => { setCode(e.target.value.toUpperCase()); setError(''); }}
-                  onKeyDown={e => { if (e.key === 'Enter') handleJoin(); }}
-                  maxLength={8}
-                  className="w-full bg-[var(--c2)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#22C55E] outline-none text-sm tracking-widest font-bold uppercase transition-colors text-center"
-                />
-              </div>
-              {error && <p className="text-[#EF4444] text-xs">{error}</p>}
+            <div>
+              <label className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide block mb-1.5">
+                Invite code
+              </label>
+              <input
+                type="text"
+                autoFocus
+                placeholder="e.g. X4K9MZ"
+                value={code}
+                onChange={e => { setCode(e.target.value.toUpperCase()); setError(''); }}
+                onKeyDown={e => { if (e.key === 'Enter') handleJoin(); }}
+                maxLength={8}
+                className="w-full bg-[var(--c2)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#22C55E] outline-none text-sm tracking-widest font-bold uppercase transition-colors text-center"
+              />
+              {error && <p className="text-[#EF4444] text-xs mt-2">{error}</p>}
             </div>
             <button
               onClick={handleJoin}
-              disabled={!code.trim() || !displayName.trim()}
+              disabled={code.trim().length < 4}
               className="w-full py-3.5 rounded-xl font-bold text-sm bg-[#22C55E] text-[#0B1C2D] hover:bg-[#16A34A] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Request to join
@@ -1017,7 +992,9 @@ function JoinTeamSheet({ onClose }: { onClose: () => void }) {
               <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-xl shrink-0">⏳</div>
               <div>
                 <p className="text-amber-400 text-sm font-semibold">Request sent</p>
-                <p className="text-[var(--ct2)] text-xs mt-0.5">Waiting for admin approval for code <span className="font-bold tracking-widest text-[var(--ct1)]">{code.trim().toUpperCase()}</span></p>
+                <p className="text-[var(--ct2)] text-xs mt-0.5">
+                  Joining as <span className="text-[var(--ct1)] font-semibold">{displayName || 'you'}</span> · waiting for admin approval
+                </p>
               </div>
             </div>
             <button
