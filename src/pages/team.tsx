@@ -554,6 +554,9 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
       ? [{ id: 'sb-admin', displayName: supabaseAdminName, role: 'admin' as const, joinedAt: 0 }]
       : [];
 
+  // All visible members: admin first, then regular members
+  const allActiveMembers = [...adminDisplay, ...activeMembers];
+
   // Next in line if admin leaves — earliest joinedAt among active members
   const nextInLine = [...activeMembers].sort((a, b) => a.joinedAt - b.joinedAt)[0] ?? null;
 
@@ -606,7 +609,7 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
           <div className="min-w-0">
             <p className="text-[var(--ct0)] text-base font-bold truncate">{team.name}</p>
             <p className="text-[var(--ct2)] text-xs mt-0.5">
-              {totalActive} member{totalActive !== 1 ? 's' : ''}
+              {allActiveMembers.length} member{allActiveMembers.length !== 1 ? 's' : ''}
               {supabasePending.length > 0 && <span className="text-amber-400"> · {supabasePending.length} pending</span>}
             </p>
           </div>
@@ -642,21 +645,15 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
             </div>
           )}
 
-          {/* Admins */}
-          <SectionLabel title="Admin" />
+          {/* All members — admin first, then regular members */}
+          <SectionLabel title="Members" count={allActiveMembers.length} />
           <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl overflow-hidden mb-1">
-            {adminDisplay.length > 0 ? adminDisplay.map(m => <MemberCard key={m.id} member={m} isAdmin={false} />) : <p className="px-4 py-3.5 text-[var(--ct2)] text-sm italic">No admin found.</p>}
-          </div>
-
-          {/* Members */}
-          <SectionLabel title="Members" count={activeMembers.length} />
-          <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl overflow-hidden mb-1">
-            {activeMembers.length > 0 ? (
-              activeMembers.map(m => (
+            {allActiveMembers.length > 0 ? (
+              allActiveMembers.map(m => (
                 <MemberCard
                   key={m.id} member={m} isAdmin={team.isAdmin}
-                  onMakeAdmin={team.isAdmin ? () => setConfirmTransfer(m.id) : undefined}
-                  onRemove={team.isAdmin ? () => updateMembers(team.members.filter(x => x.id !== m.id)) : undefined}
+                  onMakeAdmin={team.isAdmin && m.role === 'member' ? () => setConfirmTransfer(m.id) : undefined}
+                  onRemove={team.isAdmin && m.role === 'member' ? () => updateMembers(team.members.filter(x => x.id !== m.id)) : undefined}
                 />
               ))
             ) : (
