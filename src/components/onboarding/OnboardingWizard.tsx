@@ -1040,6 +1040,7 @@ function ProfileScreen({ onFinish, onBack, onTeamCreated }: { onFinish: (display
   const [name, setName]           = useState('');
   const [showTeamSheet, setShowTeamSheet] = useState(false);
   const [showJoinSheet, setShowJoinSheet] = useState(false);
+  const [createdTeam, setCreatedTeam] = useState<{ name: string; code: string } | null>(null);
 
   // Auto-populate display name from first + last
   const handleFirstName = (v: string) => {
@@ -1094,24 +1095,47 @@ function ProfileScreen({ onFinish, onBack, onTeamCreated }: { onFinish: (display
 
         {/* Team CTAs */}
         <div className="flex flex-col gap-2">
-          <button
-            onClick={() => setShowTeamSheet(true)}
-            className="w-full flex items-center gap-3 bg-[var(--c2)] border border-[var(--c5)] hover:border-[var(--ca)]/60 rounded-2xl p-4 transition-colors group"
-          >
-            <div className="w-10 h-10 rounded-xl bg-[var(--ca)]/10 flex items-center justify-center shrink-0 group-hover:bg-[var(--ca)]/20 transition-colors">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ca)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
+          {createdTeam ? (
+            /* Success state — team was created */
+            <div className="w-full bg-[#22C55E]/10 border border-[#22C55E]/30 rounded-2xl p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#22C55E]/20 flex items-center justify-center shrink-0">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[#22C55E] text-sm font-semibold">Team created!</p>
+                <p className="text-[var(--ct2)] text-xs mt-0.5 truncate">
+                  <span className="text-[var(--ct1)] font-medium">{createdTeam.name}</span>
+                  <span className="mx-1.5">·</span>
+                  Code: <span className="text-[var(--ct0)] font-bold tracking-widest">{createdTeam.code}</span>
+                </p>
+              </div>
+              <button
+                onClick={() => { setCreatedTeam(null); setShowTeamSheet(true); }}
+                className="text-[var(--ct2)] text-xs hover:text-[var(--ct1)] transition-colors shrink-0"
+              >
+                Change
+              </button>
             </div>
-            <div className="flex-1 text-left">
-              <p className="text-[var(--ct0)] text-sm font-semibold">Create a team</p>
-              <p className="text-[var(--ct2)] text-xs mt-0.5">Invite coworkers and track progress together</p>
-            </div>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ct2)" strokeWidth="2.5" strokeLinecap="round" className="shrink-0"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
+          ) : (
+            <button
+              onClick={() => setShowTeamSheet(true)}
+              className="w-full flex items-center gap-3 bg-[var(--c2)] border border-[var(--c5)] hover:border-[var(--ca)]/60 rounded-2xl p-4 transition-colors group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-[var(--ca)]/10 flex items-center justify-center shrink-0 group-hover:bg-[var(--ca)]/20 transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ca)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </div>
+              <div className="flex-1 text-left">
+                <p className="text-[var(--ct0)] text-sm font-semibold">Create a team</p>
+                <p className="text-[var(--ct2)] text-xs mt-0.5">Invite coworkers and track progress together</p>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ct2)" strokeWidth="2.5" strokeLinecap="round" className="shrink-0"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          )}
 
           <button
             onClick={() => setShowJoinSheet(true)}
@@ -1132,7 +1156,12 @@ function ProfileScreen({ onFinish, onBack, onTeamCreated }: { onFinish: (display
         <StepDots total={7} current={6} />
       </Screen>
 
-      {showTeamSheet && <TeamSheet onClose={() => setShowTeamSheet(false)} onTeamCreated={onTeamCreated} />}
+      {showTeamSheet && (
+        <TeamSheet
+          onClose={() => setShowTeamSheet(false)}
+          onTeamCreated={(n, c) => { setCreatedTeam({ name: n, code: c }); onTeamCreated(n, c); setShowTeamSheet(false); }}
+        />
+      )}
       {showJoinSheet && <JoinTeamSheet onClose={() => setShowJoinSheet(false)} />}
     </>
   );
