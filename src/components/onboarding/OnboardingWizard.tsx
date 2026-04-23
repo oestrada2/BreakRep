@@ -968,10 +968,12 @@ function TeamSheet({ onClose, onTeamCreated }: { onClose: () => void; onTeamCrea
 }
 
 // ─── Join team sheet ─────────────────────────────────────────────────────────
-function JoinTeamSheet({ onClose }: { onClose: () => void }) {
+function JoinTeamSheet({ onClose, onJoined }: { onClose: () => void; onJoined?: (team: Team) => void }) {
+  const { data: session } = useSession();
   const [code, setCode] = useState('');
   const [joined, setJoined] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // Pull display name from profile fields set earlier in the wizard
   const displayName = (() => {
@@ -983,11 +985,59 @@ function JoinTeamSheet({ onClose }: { onClose: () => void }) {
     } catch { return ''; }
   })();
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     const trimmed = code.trim().toUpperCase();
     if (trimmed.length < 4) { setError('Please enter a valid invite code.'); return; }
+    setLoading(true);
     setError('');
+
+    // Look up the team by code so we have the real name/id
+    const { data: teamData } = await supabase
+      .from('teams')
+      .select('id, name, code, organization')
+      .eq('code', trimmed)
+      .single();
+
+    if (!teamData) {
+      setError('Team not found. Double-check the code and try again.');
+      setLoading(false);
+      return;
+    }
+
+    const email = session?.user?.email ?? '';
+
+    // Insert join request so admin is notified in real time
+    await supabase.from('team_requests').insert({
+      id:              'req-' + Date.now(),
+      team_id:         teamData.id,
+      team_code:       teamData.code,
+      team_name:       teamData.name,
+      requester_name:  displayName || 'Unknown',
+      requester_email: email || null,
+      status:          'pending',
+    });
+
+    // Update this user's profile row with the team they're joining
+    if (email) {
+      await supabase.from('profiles').upsert({
+        email,
+        team:         teamData.name,
+        organization: teamData.organization ?? null,
+      });
+    }
+
+    const pendingTeam: Team = {
+      id:       teamData.id,
+      name:     teamData.name,
+      code:     teamData.code,
+      isAdmin:  false,
+      members:  [{ id: 'member-' + Date.now(), displayName: displayName || 'You', role: 'pending', joinedAt: Date.now() }],
+      joinedAt: Date.now(),
+    };
+
+    setLoading(false);
     setJoined(true);
+    onJoined?.(pendingTeam);
   };
 
   return (
@@ -1035,10 +1085,10 @@ function JoinTeamSheet({ onClose }: { onClose: () => void }) {
             </div>
             <button
               onClick={handleJoin}
-              disabled={code.trim().length < 4}
+              disabled={code.trim().length < 4 || loading}
               className="w-full py-3.5 rounded-xl font-bold text-sm bg-[#22C55E] text-[#0B1C2D] hover:bg-[#16A34A] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Request to join
+              {loading ? 'Sending…' : 'Request to join'}
             </button>
           </>
         ) : (
@@ -1066,13 +1116,19 @@ function JoinTeamSheet({ onClose }: { onClose: () => void }) {
 }
 
 // ─── Screen 6: Profile setup ──────────────────────────────────────────────────
-function ProfileScreen({ onFinish, onBack, onTeamCreated }: { onFinish: (displayName: string, firstName: string, lastName: string) => void; onBack: () => void; onTeamCreated: (name: string, code: string, org: string) => void }) {
+function ProfileScreen({ onFinish, onBack, onTeamCreated, onTeamJoined }: {
+  onFinish: (displayName: string, firstName: string, lastName: string) => void;
+  onBack: () => void;
+  onTeamCreated: (name: string, code: string, org: string) => void;
+  onTeamJoined: (team: Team) => void;
+}) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName]   = useState('');
   const [name, setName]           = useState('');
   const [showTeamSheet, setShowTeamSheet] = useState(false);
   const [showJoinSheet, setShowJoinSheet] = useState(false);
   const [createdTeam, setCreatedTeam] = useState<{ name: string; code: string } | null>(null);
+  const [joinedTeam,  setJoinedTeam]  = useState<Team | null>(null);
 
   // Auto-populate display name from first + last
   const handleFirstName = (v: string) => {
@@ -1169,19 +1225,39 @@ function ProfileScreen({ onFinish, onBack, onTeamCreated }: { onFinish: (display
             </button>
           )}
 
-          <button
-            onClick={() => setShowJoinSheet(true)}
-            className="w-full flex items-center gap-3 bg-[var(--c2)] border border-[var(--c5)] hover:border-[#22C55E]/40 rounded-2xl p-4 transition-colors group"
-          >
-            <div className="w-10 h-10 rounded-xl bg-[#22C55E]/10 flex items-center justify-center text-xl shrink-0 group-hover:bg-[#22C55E]/20 transition-colors">
-              🔗
+          {joinedTeam ? (
+            <div className="w-full bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0 text-xl">⏳</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-amber-400 text-sm font-semibold">Request sent!</p>
+                <p className="text-[var(--ct2)] text-xs mt-0.5 truncate">
+                  <span className="text-[var(--ct1)] font-medium">{joinedTeam.name}</span>
+                  <span className="mx-1.5">·</span>
+                  Waiting for admin approval
+                </p>
+              </div>
+              <button
+                onClick={() => { setJoinedTeam(null); setShowJoinSheet(true); }}
+                className="text-[var(--ct2)] text-xs hover:text-[var(--ct1)] transition-colors shrink-0"
+              >
+                Change
+              </button>
             </div>
-            <div className="flex-1 text-left">
-              <p className="text-[var(--ct0)] text-sm font-semibold">Join a team</p>
-              <p className="text-[var(--ct2)] text-xs mt-0.5">Enter an invite code to join your crew</p>
-            </div>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ct2)" strokeWidth="2.5" strokeLinecap="round" className="shrink-0"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
+          ) : (
+            <button
+              onClick={() => setShowJoinSheet(true)}
+              className="w-full flex items-center gap-3 bg-[var(--c2)] border border-[var(--c5)] hover:border-[#22C55E]/40 rounded-2xl p-4 transition-colors group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-[#22C55E]/10 flex items-center justify-center text-xl shrink-0 group-hover:bg-[#22C55E]/20 transition-colors">
+                🔗
+              </div>
+              <div className="flex-1 text-left">
+                <p className="text-[var(--ct0)] text-sm font-semibold">Join a team</p>
+                <p className="text-[var(--ct2)] text-xs mt-0.5">Enter an invite code to join your crew</p>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ct2)" strokeWidth="2.5" strokeLinecap="round" className="shrink-0"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          )}
         </div>
 
         <Button variant="primary" size="lg" className="w-full" onClick={() => onFinish(name, firstName, lastName)}>Let's go →</Button>
@@ -1194,7 +1270,12 @@ function ProfileScreen({ onFinish, onBack, onTeamCreated }: { onFinish: (display
           onTeamCreated={(n, c, org) => { setCreatedTeam({ name: n, code: c }); onTeamCreated(n, c, org); setShowTeamSheet(false); }}
         />
       )}
-      {showJoinSheet && <JoinTeamSheet onClose={() => setShowJoinSheet(false)} />}
+      {showJoinSheet && (
+        <JoinTeamSheet
+          onClose={() => setShowJoinSheet(false)}
+          onJoined={team => { setJoinedTeam(team); onTeamJoined(team); setShowJoinSheet(false); }}
+        />
+      )}
     </>
   );
 }
@@ -1230,6 +1311,7 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
   const [createdTeamName, setCreatedTeamName] = useState('');
   const [createdTeamCode, setCreatedTeamCode] = useState('');
   const [createdTeamOrg,  setCreatedTeamOrg]  = useState('');
+  const [joinedTeam,      setJoinedTeam]      = useState<Team | null>(null);
 
   const toggleExercise = (key: string) => {
     setEnabledExercises(prev => ({ ...prev, [key]: !prev[key] }));
@@ -1250,14 +1332,20 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
     const teamId = createdTeamName && createdTeamCode ? 'team-' + Date.now() : '';
     const adminName = `${firstName} ${lastName}`.trim() || profileName || 'Admin';
 
-    const teams: Team[] = createdTeamName && createdTeamCode ? [{
-      id: teamId,
-      name: createdTeamName,
-      code: createdTeamCode,
-      isAdmin: true,
-      members: [{ id: 'admin-' + Date.now(), displayName: adminName, role: 'admin' as const, joinedAt: Date.now() }],
-      joinedAt: Date.now(),
-    }] : [];
+    const teams: Team[] = [];
+    if (createdTeamName && createdTeamCode) {
+      teams.push({
+        id:       teamId,
+        name:     createdTeamName,
+        code:     createdTeamCode,
+        isAdmin:  true,
+        members:  [{ id: 'admin-' + Date.now(), displayName: adminName, role: 'admin' as const, joinedAt: Date.now() }],
+        joinedAt: Date.now(),
+      });
+    }
+    if (joinedTeam) {
+      teams.push(joinedTeam);
+    }
 
     // Persist profile to localStorage so SettingsForm reflects it immediately.
     try {
@@ -1391,7 +1479,7 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
       {step === 1 && <HowItWorksScreen    onNext={() => setStep(2)} onSkip={() => setStep(2)} />}
       {step === 4 && <NotificationsScreen onNext={() => setStep(5)} onSkip={() => setStep(5)} onBack={() => setStep(3)} />}
       {step === 5 && <SignInScreen        onNext={() => setStep(6)} onBack={() => setStep(4)} />}
-      {step === 6 && <ProfileScreen       onFinish={(dn, fn, ln) => finish(dn, fn, ln)} onBack={() => setStep(5)} onTeamCreated={(name, code, org) => { setCreatedTeamName(name); setCreatedTeamCode(code); setCreatedTeamOrg(org); }} />}
+      {step === 6 && <ProfileScreen onFinish={(dn, fn, ln) => finish(dn, fn, ln)} onBack={() => setStep(5)} onTeamCreated={(name, code, org) => { setCreatedTeamName(name); setCreatedTeamCode(code); setCreatedTeamOrg(org); }} onTeamJoined={team => setJoinedTeam(team)} />}
     </>
   );
 }
