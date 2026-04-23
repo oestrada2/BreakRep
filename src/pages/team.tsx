@@ -1,8 +1,9 @@
 import { useAppState } from '@/hooks/useAppState';
 import { NavTabs } from '@/components/layout/NavTabs';
 import type { Team, TeamMember } from '@/types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { useSession } from 'next-auth/react';
 import { supabase } from '@/lib/supabase';
 
 function formatDate(ts: number) {
@@ -102,7 +103,7 @@ function SectionLabel({ title, count }: { title: string; count?: number }) {
 function JoinTeamSheet({ onClose, onJoined }: { onClose: () => void; onJoined: (team: Team) => void }) {
   const [tab, setTab] = useState<'search' | 'code'>('search');
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<{ id: string; name: string; code: string; admin_name?: string }[]>([]);
+  const [results, setResults] = useState<{ id: string; name: string; code: string; admin_name?: string; organization?: string }[]>([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<{ id: string; name: string; code: string } | null>(null);
   const [code, setCode] = useState('');
@@ -117,8 +118,8 @@ function JoinTeamSheet({ onClose, onJoined }: { onClose: () => void; onJoined: (
     setSearching(true);
     const { data } = await supabase
       .from('teams')
-      .select('id, name, code, admin_name')
-      .ilike('name', `%${q.trim()}%`)
+      .select('id, name, code, admin_name, organization')
+      .or(`name.ilike.%${q.trim()}%,organization.ilike.%${q.trim()}%`)
       .limit(8);
     setResults(data ?? []);
     setSearching(false);
@@ -195,8 +196,11 @@ function JoinTeamSheet({ onClose, onJoined }: { onClose: () => void; onJoined: (
                           onClick={() => setSelected(r)}
                           className={`w-full text-left px-3 py-2.5 rounded-xl border text-sm transition-colors ${selected?.id === r.id ? 'border-[#22C55E]/50 bg-[#22C55E]/10 text-[var(--ct0)]' : 'border-[var(--c5)] bg-[var(--c2)] text-[var(--ct1)] hover:border-[var(--ct2)]'}`}
                         >
-                          <span className="font-semibold">{r.name}</span>
-                          {r.admin_name && <span className="text-[var(--ct2)] text-xs ml-2">Admin: {r.admin_name}</span>}
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <span className="font-semibold">{r.name}</span>
+                            {r.organization && <span className="text-[var(--ct2)] text-xs px-1.5 py-0.5 rounded-md bg-[var(--c4)]">{r.organization}</span>}
+                          </div>
+                          {r.admin_name && <p className="text-[var(--ct2)] text-xs mt-0.5">Admin: {r.admin_name}</p>}
                         </button>
                       ))}
                     </div>
@@ -242,9 +246,36 @@ function JoinTeamSheet({ onClose, onJoined }: { onClose: () => void; onJoined: (
 
 // ── Create sheet ──────────────────────────────────────────────────────────────
 function CreateTeamSheet({ onClose, onCreated }: { onClose: () => void; onCreated: (team: Team) => void }) {
+  const { data: session } = useSession();
   const [teamName, setTeamName] = useState('');
+  const [organization, setOrganization] = useState('');
+  const [orgSuggestions, setOrgSuggestions] = useState<string[]>([]);
+  const [showOrgDropdown, setShowOrgDropdown] = useState(false);
   const [created, setCreated] = useState<Team | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Pre-fill org from email domain on mount
+  useEffect(() => {
+    const email = session?.user?.email ?? '';
+    if (email) {
+      const domain = email.split('@')[1]?.split('.')[0] ?? '';
+      if (domain) setOrganization(domain.charAt(0).toUpperCase() + domain.slice(1));
+    }
+  }, [session]);
+
+  const handleOrgChange = async (val: string) => {
+    setOrganization(val);
+    if (!val.trim()) { setOrgSuggestions([]); setShowOrgDropdown(false); return; }
+    const { data } = await supabase
+      .from('teams')
+      .select('organization')
+      .ilike('organization', `%${val.trim()}%`)
+      .not('organization', 'is', null)
+      .limit(8);
+    const unique = [...new Set((data ?? []).map((r: any) => r.organization as string).filter(Boolean))];
+    setOrgSuggestions(unique);
+    setShowOrgDropdown(unique.length > 0);
+  };
 
   const handleCreate = async () => {
     if (!teamName.trim()) return;
@@ -264,8 +295,13 @@ function CreateTeamSheet({ onClose, onCreated }: { onClose: () => void; onCreate
       members: [{ id: 'admin-' + Date.now(), displayName: profileName, role: 'admin', joinedAt: Date.now() }],
       joinedAt: Date.now(),
     };
-    // Register in Supabase so others can search for it
-    await supabase.from('teams').upsert({ id: team.id, name: team.name, code: team.code, admin_name: profileName });
+    await supabase.from('teams').upsert({
+      id: team.id,
+      name: team.name,
+      code: team.code,
+      admin_name: profileName,
+      organization: organization.trim() || null,
+    });
     setCreated(team);
     onCreated(team);
   };
@@ -287,20 +323,72 @@ function CreateTeamSheet({ onClose, onCreated }: { onClose: () => void; onCreate
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
+
         {!created ? (
           <>
-            <div>
-              <label className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide block mb-1.5">Team name</label>
-              <input type="text" autoFocus placeholder="e.g. Engineering, Sales Team…" value={teamName} onChange={e => setTeamName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleCreate(); }} className="w-full bg-[var(--c2)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#FACC15] outline-none text-sm transition-colors" />
+            <div className="flex flex-col gap-3">
+              {/* Team name */}
+              <div>
+                <label className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide block mb-1.5">Team name</label>
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="e.g. Engineering, Sales Team…"
+                  value={teamName}
+                  onChange={e => setTeamName(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleCreate(); }}
+                  className="w-full bg-[var(--c2)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#FACC15] outline-none text-sm transition-colors"
+                />
+              </div>
+
+              {/* Organization with autocomplete */}
+              <div className="relative">
+                <label className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide block mb-1.5">
+                  Organization <span className="text-[var(--ct2)] normal-case font-normal">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Acme Corp"
+                  value={organization}
+                  onChange={e => handleOrgChange(e.target.value)}
+                  onFocus={() => orgSuggestions.length > 0 && setShowOrgDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowOrgDropdown(false), 150)}
+                  className="w-full bg-[var(--c2)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#FACC15] outline-none text-sm transition-colors"
+                />
+                {showOrgDropdown && (
+                  <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-[var(--c1)] border border-[var(--c5)] rounded-xl overflow-hidden shadow-xl">
+                    {orgSuggestions.map(org => (
+                      <button
+                        key={org}
+                        onMouseDown={() => { setOrganization(org); setShowOrgDropdown(false); }}
+                        className="w-full text-left px-4 py-2.5 text-sm text-[var(--ct0)] hover:bg-[var(--c4)] transition-colors flex items-center gap-2.5"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ct2)" strokeWidth="2" strokeLinecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        {org}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <p className="text-[var(--ct2)] text-xs mt-1.5">Helps teammates find the right team when multiple orgs share a name.</p>
+              </div>
             </div>
-            <button onClick={handleCreate} disabled={!teamName.trim()} className="w-full py-3.5 rounded-xl font-bold text-sm bg-[#FACC15] text-[#0B1C2D] hover:bg-[#EAB308] transition-colors disabled:opacity-40 disabled:cursor-not-allowed">Create team</button>
+
+            <button
+              onClick={handleCreate}
+              disabled={!teamName.trim()}
+              className="w-full py-3.5 rounded-xl font-bold text-sm bg-[#FACC15] text-[#0B1C2D] hover:bg-[#EAB308] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Create team
+            </button>
           </>
         ) : (
           <>
             <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-4 text-center">
               <p className="text-[var(--ct2)] text-xs mb-2">Team invite code</p>
               <p className="text-[var(--ct0)] text-4xl font-black tracking-[0.2em] mb-3">{created.code}</p>
-              <p className="text-[var(--ct2)] text-xs">for <span className="text-[var(--ct1)] font-semibold">{created.name}</span></p>
+              <p className="text-[var(--ct2)] text-xs">for <span className="text-[var(--ct1)] font-semibold">{created.name}</span>
+                {organization.trim() && <span> · {organization.trim()}</span>}
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <button onClick={handleCopy} className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${copied ? 'bg-[#22C55E]/10 border-[#22C55E]/40 text-[#22C55E]' : 'bg-[var(--c2)] border-[var(--c5)] text-[var(--ct1)] hover:border-[var(--ct2)]'}`}>
