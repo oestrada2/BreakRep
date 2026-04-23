@@ -2,14 +2,10 @@ import { useState, useEffect } from 'react';
 import type { SessionLog, EnabledExercises } from '@/types';
 import { sessionFireTime, formatTime } from '@/lib/sessions';
 
-
 interface NextSessionCardProps {
   sessions: SessionLog[];
   enabledExercises: EnabledExercises;
   customExerciseLabels?: Record<string, string>;
-  onComplete: (id: string, pushups: number, squats: number, situps: number) => void;
-  onSnooze: (id: string) => void;
-  onSkip: (id: string) => void;
 }
 
 function useCountdownToSession(session: SessionLog | null): string {
@@ -39,7 +35,6 @@ function useCountdownToSession(session: SessionLog | null): string {
   return display;
 }
 
-
 const BUILTIN_EXERCISES = [
   { key: 'pushups', label: 'Push-ups', emoji: '💪' },
   { key: 'squats',  label: 'Squats',   emoji: '🦵' },
@@ -48,7 +43,7 @@ const BUILTIN_EXERCISES = [
 
 const DEFAULT_EXERCISES = { pushups: true, squats: true, situps: true };
 
-export function NextSessionCard({ sessions, enabledExercises, customExerciseLabels, onComplete, onSnooze, onSkip }: NextSessionCardProps) {
+export function NextSessionCard({ sessions, enabledExercises, customExerciseLabels }: NextSessionCardProps) {
   const enabled = enabledExercises ?? DEFAULT_EXERCISES;
   const allExercises = [
     ...BUILTIN_EXERCISES.filter(ex => enabled[ex.key]),
@@ -56,7 +51,6 @@ export function NextSessionCard({ sessions, enabledExercises, customExerciseLabe
       .filter(([key]) => enabled[key] !== false)
       .map(([key, label]) => ({ key, label, emoji: '🏋️' })),
   ];
-  const [reps, setReps] = useState<Record<string, string>>({});
 
   const next = sessions.find(s => s.status === 'pending' || s.status === 'snoozed') ?? null;
   const countdown = useCountdownToSession(next);
@@ -85,21 +79,6 @@ export function NextSessionCard({ sessions, enabledExercises, customExerciseLabe
     return Date.now() >= fireAt.getTime();
   })();
 
-  function getReps(key: string) {
-    return reps[key] !== undefined ? reps[key] : String(next?.targetReps ?? 0);
-  }
-  function setRep(key: string, val: string) {
-    setReps(r => ({ ...r, [key]: val }));
-  }
-  function adjustRep(key: string, delta: number) {
-    const cur = parseInt(getReps(key), 10);
-    setRep(key, String(Math.max(0, (isNaN(cur) ? (next?.targetReps ?? 0) : cur) + delta)));
-  }
-  function parseRep(key: string) {
-    const p = parseInt(getReps(key), 10);
-    return isNaN(p) ? (next?.targetReps ?? 0) : p;
-  }
-
   return (
     <div className={`relative overflow-hidden rounded-2xl shadow-2xl ${
       isReady
@@ -123,7 +102,7 @@ export function NextSessionCard({ sessions, enabledExercises, customExerciseLabe
                 <span className="text-xs bg-[#FACC15]/20 text-[#FACC15] px-2 py-0.5 rounded-full font-semibold">Snoozed</span>
               )}
             </div>
-            <p className="text-[var(--ct1)] text-sm">{formatTime(next.scheduledHour, next.scheduledMinute ?? 0)}</p>
+            <p className="text-[var(--ct0)] text-xl font-bold">{formatTime(next.scheduledHour, next.scheduledMinute ?? 0)}</p>
           </div>
           {/* Countdown pill */}
           <div className={`px-3 py-1.5 rounded-full text-xs font-bold ${
@@ -135,69 +114,15 @@ export function NextSessionCard({ sessions, enabledExercises, customExerciseLabe
           </div>
         </div>
 
-        {/* Exercise rows — built-in enabled + custom */}
-        <div className="space-y-2 mb-4">
+        {/* Exercise targets — read only */}
+        <div className="space-y-2">
           {allExercises.map(ex => (
             <div key={ex.key} className="flex items-center gap-3 bg-[var(--c2)]/60 rounded-xl px-3 py-2.5">
               <span className="text-xl w-7 text-center">{ex.emoji}</span>
               <span className="text-[var(--ct0)] text-sm font-semibold flex-1">{ex.label}</span>
-              {/* Stepper */}
-              <div className="flex items-center bg-[var(--c4)] border border-[var(--c5)] rounded-lg overflow-hidden">
-                <button
-                  onClick={() => adjustRep(ex.key, -1)}
-                  className="w-8 h-8 flex items-center justify-center text-[var(--ct2)] hover:text-[var(--ct0)] font-bold transition-colors"
-                >−</button>
-                <input
-                  type="number"
-                  min={0}
-                  value={getReps(ex.key)}
-                  onChange={e => setRep(ex.key, e.target.value)}
-                  className="w-10 text-center bg-transparent text-[var(--ct0)] font-bold text-sm outline-none"
-                />
-                <button
-                  onClick={() => adjustRep(ex.key, 1)}
-                  className="w-8 h-8 flex items-center justify-center text-[var(--ct2)] hover:text-[var(--ct0)] font-bold transition-colors"
-                >+</button>
-              </div>
-              <span className="text-[var(--ct2)] text-xs w-6">reps</span>
+              <span className="text-[var(--ct1)] text-sm font-bold tabular-nums">{next.targetReps} reps</span>
             </div>
           ))}
-        </div>
-
-        {/* Primary CTA */}
-        <button
-          onClick={() => {
-            onComplete(
-              next.id,
-              enabled.pushups ? parseRep('pushups') : 0,
-              enabled.squats  ? parseRep('squats')  : 0,
-              enabled.situps  ? parseRep('situps')  : 0,
-            );
-            setReps({});
-          }}
-          className={`w-full py-3.5 rounded-xl font-bold text-sm transition-all active:scale-95 shadow-lg mb-3 ${
-            isReady
-              ? 'bg-[#22C55E] text-[#0B1C2D] shadow-green-500/25 hover:bg-[#16A34A]'
-              : 'bg-[#FACC15] text-[#0B1C2D] shadow-yellow-500/25 hover:bg-[#EAB308]'
-          }`}
-        >
-          {isReady ? '✓ Complete Session' : 'Mark as Done Early'}
-        </button>
-
-        {/* Secondary actions */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => onSnooze(next.id)}
-            className="flex-1 py-2 rounded-xl text-xs font-semibold bg-[var(--c2)] border border-[var(--c5)] text-[#FACC15] hover:border-[#FACC15]/50 transition-colors"
-          >
-            ⏰ Snooze
-          </button>
-          <button
-            onClick={() => onSkip(next.id)}
-            className="flex-1 py-2 rounded-xl text-xs font-semibold bg-[var(--c2)] border border-[var(--c5)] text-[#FB923C] hover:border-[#FB923C]/50 transition-colors"
-          >
-            → Skip
-          </button>
         </div>
       </div>
     </div>

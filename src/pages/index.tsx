@@ -87,9 +87,6 @@ export default function Today() {
           sessions={todaySessions}
           enabledExercises={enabledExercises}
           customExerciseLabels={settings.customExerciseLabels}
-          onComplete={completeSession}
-          onSnooze={snoozeSession}
-          onSkip={skipSession}
         />
 
         {/* Day progress bar */}
