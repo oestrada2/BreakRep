@@ -1,7 +1,7 @@
 import { useAppState } from '@/hooks/useAppState';
 import { NavTabs } from '@/components/layout/NavTabs';
 import type { Team, TeamMember } from '@/types';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 import { supabase } from '@/lib/supabase';
@@ -13,6 +13,21 @@ function formatDate(ts: number) {
 function generateTeamCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
+
+function offsetISO(days: number) {
+  const d = new Date(Date.now() + days * 86_400_000);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+type LeaderboardEntry = {
+  email: string;
+  display_name: string | null;
+  week_reps: number;
+  week_sessions: number;
+  streak: number;
+  total_reps: number;
+  updated_at: string;
+};
 
 function RoleBadge({ role }: { role: 'admin' | 'member' | 'pending' }) {
   if (role === 'admin') return (
@@ -456,6 +471,7 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [supabasePending, setSupabasePending] = useState<SupabaseRequest[]>([]);
   const [supabaseAdminName, setSupabaseAdminName] = useState<string | null>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 
   // Fetch admin name from Supabase — non-admin members don't have admin in local state
   useEffect(() => {
@@ -524,6 +540,16 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
 
     return () => { supabase.removeChannel(channel); };
   }, [team.code, team.isAdmin]);
+
+  // Fetch leaderboard for this team
+  useEffect(() => {
+    supabase
+      .from('team_stats')
+      .select('email, display_name, week_reps, week_sessions, streak, total_reps, updated_at')
+      .eq('team_code', team.code)
+      .order('week_reps', { ascending: false })
+      .then(({ data }) => setLeaderboard(data ?? []));
+  }, [team.code]);
 
   async function approveRequest(req: SupabaseRequest) {
     await supabase.from('team_requests').update({ status: 'approved' }).eq('id', req.id);
@@ -664,6 +690,40 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
             )}
           </div>
 
+          {/* Leaderboard */}
+          <SectionLabel title="Leaderboard" />
+          <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl overflow-hidden mb-1">
+            {leaderboard.length === 0 ? (
+              <p className="px-4 py-5 text-center text-[var(--ct2)] text-sm">No activity yet. Complete sessions to appear here.</p>
+            ) : (
+              leaderboard.map((entry, i) => {
+                const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null;
+                const initials = (entry.display_name ?? '?').split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+                return (
+                  <div key={entry.email} className="flex items-center gap-3 px-4 py-3 border-b border-[var(--c4)] last:border-0">
+                    <div className="w-7 text-center text-sm font-bold shrink-0">
+                      {medal ?? <span className="text-[var(--ct2)] text-xs">{i + 1}</span>}
+                    </div>
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
+                      i === 0 ? 'bg-[#FACC15]/20 text-[#FACC15]' :
+                      i === 1 ? 'bg-slate-400/20 text-slate-300' :
+                      i === 2 ? 'bg-amber-700/20 text-amber-600' :
+                      'bg-[var(--c4)] text-[var(--ct1)]'
+                    }`}>{initials}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[var(--ct0)] text-sm font-semibold truncate">{entry.display_name ?? 'Unknown'}</p>
+                      <p className="text-[var(--ct2)] text-xs mt-0.5">{entry.streak} day streak · {entry.total_reps.toLocaleString()} total reps</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-[#FACC15] font-bold text-sm">{entry.week_reps}</p>
+                      <p className="text-[var(--ct2)] text-[10px] mt-0.5">reps this week</p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
           {/* Pending join requests — admin only */}
           {team.isAdmin && <SectionLabel title="Join Requests" count={supabasePending.length} />}
           {team.isAdmin && <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl overflow-hidden">
@@ -751,11 +811,45 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function TeamPage() {
   const router = useRouter();
-  const { settings, updateSettings } = useAppState();
+  const { settings, updateSettings, allStats, streak } = useAppState();
+  const { data: session } = useSession();
   const [showJoin, setShowJoin] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
 
   const teams = settings.teams ?? [];
+
+  // Compute this-week and all-time rep counts to publish to the leaderboard
+  const weekStart = useMemo(() => offsetISO(-6), []);
+  const weekStats = useMemo(() => allStats.filter(s => s.date >= weekStart), [allStats, weekStart]);
+  const weekReps     = useMemo(() => weekStats.reduce((n, s) => n + s.totalReps,  0), [weekStats]);
+  const weekSessions = useMemo(() => weekStats.reduce((n, s) => n + s.completed,  0), [weekStats]);
+  const totalReps    = useMemo(() => allStats.reduce((n, s) => n + s.totalReps,   0), [allStats]);
+
+  // Upsert current user's stats for every team they belong to
+  useEffect(() => {
+    const email = session?.user?.email;
+    if (!email || teams.length === 0) return;
+    const displayName = (() => {
+      try {
+        const p = JSON.parse(localStorage.getItem('puh_profile') ?? 'null');
+        if (!p) return null;
+        const fullName = `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim();
+        return fullName || p.displayName || null;
+      } catch { return null; }
+    })();
+    for (const team of teams) {
+      supabase.from('team_stats').upsert({
+        email,
+        team_code:     team.code,
+        display_name:  displayName,
+        week_reps:     weekReps,
+        week_sessions: weekSessions,
+        streak,
+        total_reps:    totalReps,
+        updated_at:    new Date().toISOString(),
+      }, { onConflict: 'email,team_code' });
+    }
+  }, [session, teams, weekReps, weekSessions, streak, totalReps]);
 
   function updateTeam(updated: Team) {
     updateSettings({ teams: teams.map(t => t.id === updated.id ? updated : t) });
