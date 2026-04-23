@@ -71,8 +71,9 @@ export function SessionList({ sessions, enabledExercises, customExerciseLabels, 
       <div className="space-y-2">
         {visible.map(s => {
           const cfg    = STATUS_CONFIG[s.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.pending;
-          const canAct = s.status === 'pending' || s.status === 'snoozed';
-          const canUndo = s.status === 'completed' || s.status === 'skipped' || s.status === 'snoozed';
+          const canAct    = s.status === 'pending' || s.status === 'snoozed' || s.status === 'missed';
+          const canSnooze = s.status === 'pending' || s.status === 'snoozed';
+          const canUndo   = s.status === 'completed' || s.status === 'skipped' || s.status === 'snoozed';
 
           return (
             <div key={s.id} className="bg-[var(--c0)]/40 rounded-xl px-3 py-2.5">
@@ -82,7 +83,7 @@ export function SessionList({ sessions, enabledExercises, customExerciseLabels, 
                 <span className="text-[var(--ct2)] text-xs font-medium flex-1">
                   {formatTime(s.scheduledHour, s.scheduledMinute ?? 0)}
                 </span>
-                {!canAct && (
+                {(!canAct || s.status === 'missed') && (
                   <div className="flex items-center gap-1.5">
                     <span className={`text-xs font-semibold ${cfg.labelColor}`}>{cfg.label}</span>
                     {canUndo && (
@@ -154,11 +155,13 @@ export function SessionList({ sessions, enabledExercises, customExerciseLabels, 
                     }}
                     className="flex-1 py-1.5 bg-[#22C55E] text-[#0B1C2D] rounded-lg text-xs font-bold hover:bg-[#16A34A] transition-colors"
                   >Done</button>
-                  <button
-                    onClick={() => onSnooze(s.id)}
-                    className="px-3 py-1.5 bg-[#FACC15]/10 text-[#FACC15] rounded-lg text-xs font-semibold border border-[#FACC15]/20 hover:bg-[#FACC15]/20 transition-colors"
-                    title="Snooze"
-                  >Z</button>
+                  {canSnooze && (
+                    <button
+                      onClick={() => onSnooze(s.id)}
+                      className="px-3 py-1.5 bg-[#FACC15]/10 text-[#FACC15] rounded-lg text-xs font-semibold border border-[#FACC15]/20 hover:bg-[#FACC15]/20 transition-colors"
+                      title="Snooze"
+                    >Z</button>
+                  )}
                   <button
                     onClick={() => onSkip(s.id)}
                     className="px-3 py-1.5 bg-[#FB923C]/10 text-[#FB923C] rounded-lg text-xs font-semibold border border-[#FB923C]/20 hover:bg-[#FB923C]/20 transition-colors"
