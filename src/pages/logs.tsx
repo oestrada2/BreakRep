@@ -74,6 +74,9 @@ export default function Logs() {
   const thisWeek = useMemo(() => ({
     done: thisWeekStats.reduce((n, s) => n + s.completed, 0),
     reps: thisWeekStats.reduce((n, s) => n + s.totalReps, 0),
+    pushupReps: thisWeekStats.reduce((n, s) => n + s.pushupReps, 0),
+    squatReps: thisWeekStats.reduce((n, s) => n + s.squatReps, 0),
+    situpReps: thisWeekStats.reduce((n, s) => n + s.situpReps, 0),
     rate: thisWeekStats.length
       ? Math.round(thisWeekStats.reduce((n, s) => n + s.complianceRate, 0) / thisWeekStats.length * 100)
       : 0,
@@ -89,6 +92,10 @@ export default function Logs() {
   const totalReps = useMemo(() =>
     allStats.reduce((n, s) => n + s.totalReps, 0),
   [allStats]);
+
+  const allTimePushupReps = useMemo(() => allStats.reduce((n, s) => n + s.pushupReps, 0), [allStats]);
+  const allTimeSquatReps  = useMemo(() => allStats.reduce((n, s) => n + s.squatReps, 0),  [allStats]);
+  const allTimeSitupReps  = useMemo(() => allStats.reduce((n, s) => n + s.situpReps, 0),  [allStats]);
 
   const personalBest = useMemo(() =>
     Math.max(0, ...Object.values(logs).map(s => s.completedReps ?? 0)),
@@ -201,6 +208,15 @@ export default function Logs() {
                   {repDiff >= 0 ? '↑' : '↓'} {Math.abs(repDiff)} vs last week
                 </p>
               )}
+              {thisWeek.reps > 0 && (
+                <p className="text-[var(--ct2)] text-[10px] mt-1">
+                  {[
+                    thisWeek.pushupReps > 0 ? `💪 ${thisWeek.pushupReps}` : null,
+                    thisWeek.squatReps  > 0 ? `🦵 ${thisWeek.squatReps}`  : null,
+                    thisWeek.situpReps  > 0 ? `🔥 ${thisWeek.situpReps}`  : null,
+                  ].filter(Boolean).join(' · ')}
+                </p>
+              )}
               <p className="text-[var(--ct2)] text-xs mt-1.5">Reps</p>
             </div>
             <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
@@ -218,6 +234,15 @@ export default function Logs() {
           <div className="grid grid-cols-3 gap-2">
             <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
               <p className="text-[#22C55E] font-bold text-2xl leading-none">{totalReps}</p>
+              {totalReps > 0 && (
+                <p className="text-[var(--ct2)] text-[10px] mt-1">
+                  {[
+                    allTimePushupReps > 0 ? `💪 ${allTimePushupReps}` : null,
+                    allTimeSquatReps  > 0 ? `🦵 ${allTimeSquatReps}`  : null,
+                    allTimeSitupReps  > 0 ? `🔥 ${allTimeSitupReps}`  : null,
+                  ].filter(Boolean).join(' · ')}
+                </p>
+              )}
               <p className="text-[var(--ct2)] text-xs mt-1.5">Total reps</p>
             </div>
             <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">

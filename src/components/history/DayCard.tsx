@@ -57,7 +57,12 @@ export function DayCard({ date, sessions, stats, filterStatus, enabledExercises,
           <p className="text-[var(--ct0)] text-sm font-semibold">{formatDateLabel(date)}</p>
           {stats && (
             <p className="text-[var(--ct2)] text-xs mt-0.5">
-              {stats.completed}/{stats.totalSessions} sessions · {stats.totalReps} reps
+              {stats.completed}/{stats.totalSessions} sessions
+              {stats.totalReps > 0 && ` · ${[
+                stats.pushupReps > 0 ? `💪 ${stats.pushupReps}` : null,
+                stats.squatReps  > 0 ? `🦵 ${stats.squatReps}`  : null,
+                stats.situpReps  > 0 ? `🔥 ${stats.situpReps}`  : null,
+              ].filter(Boolean).join(' · ')}`}
             </p>
           )}
         </div>
