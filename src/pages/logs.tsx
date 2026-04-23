@@ -23,7 +23,7 @@ function toLocalISO(d: Date) {
 }
 
 export default function Logs() {
-  const { logs, allStats, streak } = useAppState();
+  const { logs, allStats, streak, todaySessions, settings } = useAppState();
 
   const todayISO = toLocalISO(new Date());
   const [selectedDate, setSelectedDate] = useState<string>(todayISO);
@@ -31,21 +31,29 @@ export default function Logs() {
   const [search, setSearch] = useState('');
   const [view, setView] = useState<'day' | 'calendar' | 'all'>('day');
 
-  // Group all logs by date
+  // Group all logs by date, merging today's generated sessions so the day
+  // view always shows pending sessions even before they're persisted to logs.
   const byDate = useMemo(() => {
     const map: Record<string, SessionLog[]> = {};
     Object.values(logs).forEach(s => {
       if (!map[s.date]) map[s.date] = [];
       map[s.date].push(s);
     });
-    // Sort sessions within each day by time
+    // Overlay today's resolved sessions (includes pending ones not yet in logs)
+    if (todaySessions.length > 0) {
+      const d = todaySessions[0].date;
+      const existingIds = new Set((map[d] ?? []).map(s => s.id));
+      const additions = todaySessions.filter(s => !existingIds.has(s.id));
+      map[d] = [...(map[d] ?? []), ...additions];
+    }
+    // Sort sessions within each day by scheduled time
     Object.values(map).forEach(arr => arr.sort((a, b) =>
       a.scheduledHour !== b.scheduledHour
         ? a.scheduledHour - b.scheduledHour
         : (a.scheduledMinute ?? 0) - (b.scheduledMinute ?? 0)
     ));
     return map;
-  }, [logs]);
+  }, [logs, todaySessions]);
 
   const activeDates = useMemo(() => new Set(Object.keys(byDate)), [byDate]);
 
@@ -180,6 +188,8 @@ export default function Logs() {
                 sessions={byDate[selectedDate]}
                 stats={statsMap[selectedDate] ?? null}
                 filterStatus={filter}
+                enabledExercises={settings.enabledExercises}
+                customExerciseLabels={settings.customExerciseLabels}
               />
             ) : (
               <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-8 text-center">
@@ -208,6 +218,8 @@ export default function Logs() {
                   sessions={byDate[date]}
                   stats={statsMap[date] ?? null}
                   filterStatus={filter}
+                  enabledExercises={settings.enabledExercises}
+                  customExerciseLabels={settings.customExerciseLabels}
                 />
               ))
             )}
