@@ -151,6 +151,17 @@ function JoinTeamSheet({ onClose, onJoined }: { onClose: () => void; onJoined: (
       });
     }
 
+    // Insert join request into Supabase so admin sees it in real time
+    await supabase.from('team_requests').insert({
+      id:              'req-' + Date.now(),
+      team_id:         teamId,
+      team_code:       teamCode,
+      team_name:       teamName,
+      requester_name:  displayName || 'Unknown',
+      requester_email: email || null,
+      status:          'pending',
+    });
+
     const newTeam: Team = {
       id: teamId,
       name: teamName,
@@ -434,11 +445,56 @@ function CreateTeamSheet({ onClose, onCreated }: { onClose: () => void; onCreate
 }
 
 // ── Team card ─────────────────────────────────────────────────────────────────
+type SupabaseRequest = { id: string; requester_name: string; requester_email: string | null; created_at: string };
+
 function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated: Team) => void; onLeave: () => void }) {
   const [codeCopied, setCodeCopied] = useState(false);
   const [collapsed, setCollapsed] = useState(true);
-  const [confirmTransfer, setConfirmTransfer] = useState<string | null>(null); // member id
+  const [confirmTransfer, setConfirmTransfer] = useState<string | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [supabasePending, setSupabasePending] = useState<SupabaseRequest[]>([]);
+
+  // Fetch pending join requests from Supabase and subscribe to real-time updates
+  useEffect(() => {
+    const fetchRequests = async () => {
+      const { data } = await supabase
+        .from('team_requests')
+        .select('id, requester_name, requester_email, created_at')
+        .eq('team_code', team.code)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: true });
+      const incoming = data ?? [];
+      setSupabasePending(incoming);
+      // Auto-expand card when there are new requests
+      if (incoming.length > 0) setCollapsed(false);
+    };
+
+    fetchRequests();
+
+    const channel = supabase
+      .channel(`requests:${team.code}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_requests', filter: `team_code=eq.${team.code}` }, fetchRequests)
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [team.code]);
+
+  async function approveRequest(req: SupabaseRequest) {
+    await supabase.from('team_requests').update({ status: 'approved' }).eq('id', req.id);
+    const newMember: TeamMember = {
+      id: 'member-' + Date.now(),
+      displayName: req.requester_name,
+      role: 'member',
+      joinedAt: Date.now(),
+    };
+    onUpdate({ ...team, members: [...team.members, newMember] });
+    setSupabasePending(p => p.filter(r => r.id !== req.id));
+  }
+
+  async function rejectRequest(id: string) {
+    await supabase.from('team_requests').update({ status: 'rejected' }).eq('id', id);
+    setSupabasePending(p => p.filter(r => r.id !== id));
+  }
 
   const adminMembers  = team.members.filter(m => m.role === 'admin');
   const activeMembers = team.members.filter(m => m.role === 'member');
@@ -498,7 +554,7 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
             <p className="text-[var(--ct0)] text-base font-bold truncate">{team.name}</p>
             <p className="text-[var(--ct2)] text-xs mt-0.5">
               {totalActive} member{totalActive !== 1 ? 's' : ''}
-              {pending.length > 0 && <span className="text-amber-400"> · {pending.length} pending</span>}
+              {supabasePending.length > 0 && <span className="text-amber-400"> · {supabasePending.length} pending</span>}
             </p>
           </div>
         </button>
@@ -521,14 +577,14 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
 
       {!collapsed && (
         <>
-          {/* Admin pending alert */}
-          {team.isAdmin && pending.length > 0 && (
+          {/* Pending join requests alert */}
+          {supabasePending.length > 0 && (
             <div className="bg-amber-500/10 border border-amber-500/25 rounded-2xl px-4 py-3 flex items-center gap-3 mb-1">
               <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               </div>
               <p className="text-amber-300 text-sm flex-1">
-                <span className="font-semibold">{pending.length} request{pending.length !== 1 ? 's' : ''}</span> waiting for your approval
+                <span className="font-semibold">{supabasePending.length} request{supabasePending.length !== 1 ? 's' : ''}</span> waiting for approval
               </p>
             </div>
           )}
@@ -558,23 +614,33 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
             )}
           </div>
 
-          {/* Pending (admin only) */}
-          {team.isAdmin && (
-            <>
-              <SectionLabel title="Pending Requests" count={pending.length} />
-              <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl overflow-hidden">
-                {pending.length > 0 ? pending.map(m => (
-                  <MemberCard
-                    key={m.id} member={m} isAdmin
-                    onApprove={() => updateMembers(team.members.map(x => x.id === m.id ? { ...x, role: 'member' as const } : x))}
-                    onReject={() => updateMembers(team.members.filter(x => x.id !== m.id))}
-                  />
-                )) : (
-                  <p className="px-4 py-5 text-center text-[var(--ct2)] text-sm">No pending requests.</p>
-                )}
-              </div>
-            </>
-          )}
+          {/* Pending join requests — visible to all members, powered by Supabase */}
+          <SectionLabel title="Join Requests" count={supabasePending.length} />
+          <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl overflow-hidden">
+            {supabasePending.length > 0 ? supabasePending.map(req => {
+              const initials = req.requester_name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+              return (
+                <div key={req.id} className="flex items-center gap-3 px-4 py-3.5 border-b border-[var(--c4)] last:border-0 bg-amber-500/5">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-300 flex items-center justify-center font-bold text-sm shrink-0">
+                    {initials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-[var(--ct0)] text-sm font-semibold truncate">{req.requester_name}</p>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] font-bold uppercase tracking-wide">Pending</span>
+                    </div>
+                    <p className="text-[var(--ct2)] text-xs mt-0.5">Requested to join</p>
+                  </div>
+                  <div className="flex gap-1.5 shrink-0">
+                    <button onClick={() => approveRequest(req)} className="px-2.5 py-1.5 rounded-lg bg-[#22C55E]/15 border border-[#22C55E]/30 text-[#22C55E] text-xs font-semibold hover:bg-[#22C55E]/25 transition-colors">Approve</button>
+                    <button onClick={() => rejectRequest(req.id)} className="px-2.5 py-1.5 rounded-lg bg-[#EF4444]/10 border border-[#EF4444]/20 text-[#EF4444] text-xs font-semibold hover:bg-[#EF4444]/20 transition-colors">Reject</button>
+                  </div>
+                </div>
+              );
+            }) : (
+              <p className="px-4 py-5 text-center text-[var(--ct2)] text-sm">No pending requests.</p>
+            )}
+          </div>
         </>
       )}
     </div>
