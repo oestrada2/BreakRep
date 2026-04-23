@@ -33,13 +33,14 @@ function RoleBadge({ role }: { role: 'admin' | 'member' | 'pending' }) {
 }
 
 function MemberCard({
-  member, isAdmin, onApprove, onReject, onRemove,
+  member, isAdmin, onApprove, onReject, onRemove, onMakeAdmin,
 }: {
   member: TeamMember;
   isAdmin: boolean;
   onApprove?: () => void;
   onReject?: () => void;
   onRemove?: () => void;
+  onMakeAdmin?: () => void;
 }) {
   const initials = member.displayName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
   return (
@@ -68,10 +69,19 @@ function MemberCard({
           <button onClick={onReject} className="px-2.5 py-1.5 rounded-lg bg-[#EF4444]/10 border border-[#EF4444]/20 text-[#EF4444] text-xs font-semibold hover:bg-[#EF4444]/20 transition-colors">Reject</button>
         </div>
       )}
-      {isAdmin && member.role === 'member' && onRemove && (
-        <button onClick={onRemove} className="shrink-0 w-7 h-7 flex items-center justify-center text-[var(--ct2)] hover:text-[#EF4444] transition-colors">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
+      {isAdmin && member.role === 'member' && (
+        <div className="flex items-center gap-1.5 shrink-0">
+          {onMakeAdmin && (
+            <button onClick={onMakeAdmin} className="px-2.5 py-1.5 rounded-lg bg-[#FACC15]/10 border border-[#FACC15]/30 text-[#FACC15] text-xs font-semibold hover:bg-[#FACC15]/20 transition-colors">
+              Make Admin
+            </button>
+          )}
+          {onRemove && (
+            <button onClick={onRemove} className="w-7 h-7 flex items-center justify-center text-[var(--ct2)] hover:text-[#EF4444] transition-colors">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
@@ -314,32 +324,58 @@ function CreateTeamSheet({ onClose, onCreated }: { onClose: () => void; onCreate
 function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated: Team) => void; onLeave: () => void }) {
   const [codeCopied, setCodeCopied] = useState(false);
   const [collapsed, setCollapsed] = useState(true);
+  const [confirmTransfer, setConfirmTransfer] = useState<string | null>(null); // member id
+  const [confirmLeave, setConfirmLeave] = useState(false);
 
   const adminMembers  = team.members.filter(m => m.role === 'admin');
   const activeMembers = team.members.filter(m => m.role === 'member');
   const pending       = team.members.filter(m => m.role === 'pending');
   const totalActive   = team.members.filter(m => m.role !== 'pending').length;
 
+  // Next in line if admin leaves — earliest joinedAt among active members
+  const nextInLine = [...activeMembers].sort((a, b) => a.joinedAt - b.joinedAt)[0] ?? null;
+
   function updateMembers(members: TeamMember[]) {
     onUpdate({ ...team, members });
+  }
+
+  async function transferAdmin(memberId: string) {
+    const target = team.members.find(m => m.id === memberId);
+    if (!target) return;
+    const newMembers = team.members.map(m => {
+      if (m.role === 'admin') return { ...m, role: 'member' as const };
+      if (m.id === memberId) return { ...m, role: 'admin' as const };
+      return m;
+    });
+    onUpdate({ ...team, members: newMembers, isAdmin: false });
+    await supabase.from('teams').update({ admin_name: target.displayName }).eq('code', team.code);
+    setConfirmTransfer(null);
+  }
+
+  async function handleLeave() {
+    if (team.isAdmin && nextInLine) {
+      // Auto-promote the next member before leaving
+      await supabase.from('teams').update({ admin_name: nextInLine.displayName }).eq('code', team.code);
+    }
+    setConfirmLeave(false);
+    onLeave();
   }
 
   async function shareCode() {
     const text = `Join my BreakRep team "${team.name}"! Use code ${team.code}.`;
     if (navigator.share) {
-      try {
-        await navigator.share({ title: `Join ${team.name} on BreakRep`, text });
-        return;
-      } catch {}
+      try { await navigator.share({ title: `Join ${team.name} on BreakRep`, text }); return; } catch {}
     }
-    // Fallback: copy to clipboard
     navigator.clipboard.writeText(team.code).then(() => {
       setCodeCopied(true);
       setTimeout(() => setCodeCopied(false), 2000);
     });
   }
 
+  const transferTarget = confirmTransfer ? team.members.find(m => m.id === confirmTransfer) : null;
+
   return (
+    <>
     <div className="mb-4">
       {/* Team header */}
       <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-4 flex items-center justify-between mb-1">
@@ -356,22 +392,17 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
         <div className="flex items-center gap-2 shrink-0">
           {team.isAdmin && (
             <div className="flex items-center gap-1.5">
-              {/* Share — labelled as "Team code: XXX" */}
               <button onClick={shareCode} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border bg-[var(--c4)] border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold hover:border-[var(--ca)]/40 transition-all">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                 <span className="text-[var(--ct2)] font-normal">Code:</span> {team.code}
               </button>
-              {/* Copy code */}
               <button onClick={() => navigator.clipboard.writeText(team.code).then(() => { setCodeCopied(true); setTimeout(() => setCodeCopied(false), 2000); })} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${codeCopied ? 'bg-[#22C55E]/10 border-[#22C55E]/30 text-[#22C55E]' : 'bg-[var(--c4)] border-[var(--c5)] text-[var(--ct1)] hover:border-[var(--ca)]/40'}`}>
-                {codeCopied
-                  ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                }
+                {codeCopied ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg> : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>}
                 {codeCopied ? 'Copied!' : 'Copy code'}
               </button>
             </div>
           )}
-          <button onClick={onLeave} className="px-3 py-1.5 rounded-xl border border-[var(--c5)] text-xs font-semibold text-[var(--ct2)] hover:text-[#EF4444] hover:border-[#EF4444]/30 transition-colors">Leave</button>
+          <button onClick={() => setConfirmLeave(true)} className="px-3 py-1.5 rounded-xl border border-[var(--c5)] text-xs font-semibold text-[var(--ct2)] hover:text-[#EF4444] hover:border-[#EF4444]/30 transition-colors">Leave</button>
         </div>
       </div>
 
@@ -400,7 +431,11 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
           <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl overflow-hidden mb-1">
             {activeMembers.length > 0 ? (
               activeMembers.map(m => (
-                <MemberCard key={m.id} member={m} isAdmin={team.isAdmin} onRemove={team.isAdmin ? () => updateMembers(team.members.filter(x => x.id !== m.id)) : undefined} />
+                <MemberCard
+                  key={m.id} member={m} isAdmin={team.isAdmin}
+                  onMakeAdmin={team.isAdmin ? () => setConfirmTransfer(m.id) : undefined}
+                  onRemove={team.isAdmin ? () => updateMembers(team.members.filter(x => x.id !== m.id)) : undefined}
+                />
               ))
             ) : (
               <div className="px-4 py-5 text-center">
@@ -430,6 +465,57 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
         </>
       )}
     </div>
+
+    {/* ── Confirm: transfer admin ── */}
+    {confirmTransfer && transferTarget && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+        <div className="w-full max-w-sm bg-[var(--c1)] border border-[var(--c5)] rounded-3xl p-6 flex flex-col gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-[#FACC15]/10 flex items-center justify-center mx-auto">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FACC15" strokeWidth="2" strokeLinecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <div className="text-center">
+            <p className="text-[var(--ct0)] text-base font-bold">Transfer admin role?</p>
+            <p className="text-[var(--ct2)] text-sm mt-1.5 leading-relaxed">
+              <span className="text-[var(--ct0)] font-semibold">{transferTarget.displayName}</span> will become the new admin. You'll step down to a regular member and lose admin privileges.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => setConfirmTransfer(null)} className="flex-1 py-2.5 rounded-xl border border-[var(--c5)] text-sm font-semibold text-[var(--ct1)] hover:text-[var(--ct0)] transition-colors">Cancel</button>
+            <button onClick={() => transferAdmin(confirmTransfer)} className="flex-1 py-2.5 rounded-xl bg-[#FACC15] text-[#0B1C2D] text-sm font-bold hover:bg-[#EAB308] transition-colors">Yes, transfer</button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* ── Confirm: leave team ── */}
+    {confirmLeave && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+        <div className="w-full max-w-sm bg-[var(--c1)] border border-[var(--c5)] rounded-3xl p-6 flex flex-col gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-[#EF4444]/10 flex items-center justify-center mx-auto">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          </div>
+          <div className="text-center">
+            <p className="text-[var(--ct0)] text-base font-bold">Leave {team.name}?</p>
+            {team.isAdmin && nextInLine ? (
+              <p className="text-[var(--ct2)] text-sm mt-1.5 leading-relaxed">
+                As admin, leaving will automatically pass the role to <span className="text-[var(--ct0)] font-semibold">{nextInLine.displayName}</span>, the next longest-standing member.
+              </p>
+            ) : team.isAdmin && !nextInLine ? (
+              <p className="text-[var(--ct2)] text-sm mt-1.5 leading-relaxed">
+                You're the only member. Leaving will disband the team.
+              </p>
+            ) : (
+              <p className="text-[var(--ct2)] text-sm mt-1.5">You'll be removed from this team.</p>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => setConfirmLeave(false)} className="flex-1 py-2.5 rounded-xl border border-[var(--c5)] text-sm font-semibold text-[var(--ct1)] hover:text-[var(--ct0)] transition-colors">Cancel</button>
+            <button onClick={handleLeave} className="flex-1 py-2.5 rounded-xl bg-[#EF4444] text-white text-sm font-bold hover:bg-[#DC2626] transition-colors">Leave</button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 
