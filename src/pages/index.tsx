@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useAppState } from '@/hooks/useAppState';
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 import { NavTabs } from '@/components/layout/NavTabs';
@@ -31,6 +32,8 @@ export default function Today() {
     completeSession, undoSession, skipSession, snoozeSession,
     updateSettings, initialized,
   } = useAppState();
+
+  const [repOverrides, setRepOverrides] = useState<Record<string, number>>({});
 
   if (!initialized) return null;
 
@@ -88,6 +91,8 @@ export default function Today() {
           enabledExercises={enabledExercises}
           customExerciseLabels={settings.customExerciseLabels}
           targetReps={todayReps}
+          repOverrides={repOverrides}
+          onRepChange={(key, val) => setRepOverrides(prev => ({ ...prev, [key]: val }))}
           onComplete={completeSession}
           onSnooze={snoozeSession}
           onSkip={skipSession}
@@ -102,6 +107,7 @@ export default function Today() {
             sessions={todaySessions}
             enabledExercises={enabledExercises}
             targetReps={todayReps}
+            repOverrides={repOverrides}
             excludeId={todaySessions.find(s => s.status === 'pending' || s.status === 'snoozed')?.id}
             onComplete={completeSession}
             onUndo={undoSession}

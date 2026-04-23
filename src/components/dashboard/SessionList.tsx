@@ -7,6 +7,7 @@ interface SessionListProps {
   enabledExercises: EnabledExercises;
   customExerciseLabels?: Record<string, string>;
   targetReps: number;
+  repOverrides?: Record<string, number>;
   excludeId?: string;
   onComplete: (id: string, pushups: number, squats: number, situps: number) => void;
   onUndo: (id: string) => void;
@@ -30,7 +31,7 @@ const BUILTIN_EXERCISES = [
 
 const DEFAULT_EXERCISES = { pushups: true, squats: true, situps: true };
 
-export function SessionList({ sessions, enabledExercises, customExerciseLabels, targetReps, excludeId, onComplete, onUndo, onSkip, onSnooze }: SessionListProps) {
+export function SessionList({ sessions, enabledExercises, customExerciseLabels, targetReps, repOverrides, excludeId, onComplete, onUndo, onSkip, onSnooze }: SessionListProps) {
   const enabled = enabledExercises ?? DEFAULT_EXERCISES;
   const allExercises = [
     ...BUILTIN_EXERCISES.filter(ex => enabled[ex.key]),
@@ -107,7 +108,10 @@ export function SessionList({ sessions, enabledExercises, customExerciseLabels, 
                     ex.key === 'squats'  ? s.completedSquatReps :
                     ex.key === 'situps'  ? s.completedSitupReps :
                                           null; // custom — not stored in log
-                  const repDefault = ex.key === 'situps' ? Math.max(targetReps, 60) : targetReps;
+                  const override = repOverrides?.[ex.key];
+                  const repDefault = ex.key === 'situps'
+                    ? Math.max(override ?? targetReps, 60)
+                    : (override ?? targetReps);
                   const repVal = getRep(s.id, ex.key, repDefault);
 
                   return (
@@ -135,7 +139,7 @@ export function SessionList({ sessions, enabledExercises, customExerciseLabels, 
                         }`}>
                           {s.status === 'completed' && completedVal !== null && completedVal !== undefined
                             ? (ex.key === 'situps' ? `${completedVal} sec` : `${completedVal} reps`)
-                            : (ex.key === 'situps' ? `${Math.max(targetReps, 60)} sec` : `${targetReps} reps`)}
+                            : (ex.key === 'situps' ? `${Math.max(repOverrides?.situps ?? targetReps, 60)} sec` : `${repOverrides?.[ex.key] ?? targetReps} reps`)}
                         </span>
                       )}
                     </div>
@@ -150,9 +154,9 @@ export function SessionList({ sessions, enabledExercises, customExerciseLabels, 
                     onClick={() => {
                       onComplete(
                         s.id,
-                        enabled.pushups ? parseRep(s.id, 'pushups', targetReps) : 0,
-                        enabled.squats  ? parseRep(s.id, 'squats',  targetReps) : 0,
-                        enabled.situps  ? parseRep(s.id, 'situps',  Math.max(targetReps, 60)) : 0,
+                        enabled.pushups ? parseRep(s.id, 'pushups', repOverrides?.pushups ?? targetReps) : 0,
+                        enabled.squats  ? parseRep(s.id, 'squats',  repOverrides?.squats  ?? targetReps) : 0,
+                        enabled.situps  ? parseRep(s.id, 'situps',  Math.max(repOverrides?.situps ?? targetReps, 60)) : 0,
                       );
                       clearReps(s.id);
                     }}

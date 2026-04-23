@@ -7,6 +7,8 @@ interface NextSessionCardProps {
   enabledExercises: EnabledExercises;
   customExerciseLabels?: Record<string, string>;
   targetReps: number;
+  repOverrides?: Record<string, number>;
+  onRepChange?: (key: string, value: number) => void;
   onComplete: (id: string, pushups: number, squats: number, situps: number) => void;
   onSnooze: (id: string) => void;
   onSkip: (id: string) => void;
@@ -47,7 +49,7 @@ const BUILTIN_EXERCISES = [
 
 const DEFAULT_EXERCISES = { pushups: true, squats: true, situps: true };
 
-export function NextSessionCard({ sessions, enabledExercises, customExerciseLabels, targetReps, onComplete, onSnooze, onSkip }: NextSessionCardProps) {
+export function NextSessionCard({ sessions, enabledExercises, customExerciseLabels, targetReps, repOverrides, onRepChange, onComplete, onSnooze, onSkip }: NextSessionCardProps) {
   const enabled = enabledExercises ?? DEFAULT_EXERCISES;
   const allExercises = [
     ...BUILTIN_EXERCISES.filter(ex => enabled[ex.key]),
@@ -84,20 +86,24 @@ export function NextSessionCard({ sessions, enabledExercises, customExerciseLabe
     return Date.now() >= fireAt.getTime();
   })();
 
-  const plankDefault = Math.max(targetReps, 60);
-
   function getRepDefault(key: string) {
-    return key === 'situps' ? plankDefault : targetReps;
+    const override = repOverrides?.[key];
+    if (key === 'situps') return Math.max(override ?? targetReps, 60);
+    return override ?? targetReps;
   }
   function getReps(key: string) {
     return reps[key] !== undefined ? reps[key] : String(getRepDefault(key));
   }
   function setRep(key: string, val: string) {
     setReps(r => ({ ...r, [key]: val }));
+    const parsed = parseInt(val, 10);
+    if (!isNaN(parsed) && parsed >= 0) onRepChange?.(key, parsed);
   }
   function adjustRep(key: string, delta: number) {
     const cur = parseInt(getReps(key), 10);
-    setRep(key, String(Math.max(0, (isNaN(cur) ? getRepDefault(key) : cur) + delta)));
+    const next = Math.max(0, (isNaN(cur) ? getRepDefault(key) : cur) + delta);
+    setReps(r => ({ ...r, [key]: String(next) }));
+    onRepChange?.(key, next);
   }
   function parseRep(key: string) {
     const p = parseInt(getReps(key), 10);
