@@ -759,16 +759,42 @@ function generateTeamCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-function TeamSheet({ onClose, onTeamCreated }: { onClose: () => void; onTeamCreated?: (name: string, code: string) => void }) {
+function TeamSheet({ onClose, onTeamCreated }: { onClose: () => void; onTeamCreated?: (name: string, code: string, org: string) => void }) {
+  const { data: session } = useSession();
   const [teamName, setTeamName] = useState('');
+  const [organization, setOrganization] = useState('');
+  const [orgSuggestions, setOrgSuggestions] = useState<string[]>([]);
+  const [showOrgDropdown, setShowOrgDropdown] = useState(false);
   const [teamCode, setTeamCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const email = session?.user?.email ?? '';
+    if (email) {
+      const domain = email.split('@')[1]?.split('.')[0] ?? '';
+      if (domain) setOrganization(domain.charAt(0).toUpperCase() + domain.slice(1));
+    }
+  }, [session]);
+
+  const handleOrgChange = async (val: string) => {
+    setOrganization(val);
+    if (!val.trim()) { setOrgSuggestions([]); setShowOrgDropdown(false); return; }
+    const { data } = await supabase
+      .from('teams')
+      .select('organization')
+      .ilike('organization', `%${val.trim()}%`)
+      .not('organization', 'is', null)
+      .limit(8);
+    const unique = [...new Set((data ?? []).map((r: any) => r.organization as string).filter(Boolean))];
+    setOrgSuggestions(unique);
+    setShowOrgDropdown(unique.length > 0);
+  };
 
   const handleCreate = () => {
     if (!teamName.trim()) return;
     const code = generateTeamCode();
     setTeamCode(code);
-    onTeamCreated?.(teamName.trim(), code);
+    onTeamCreated?.(teamName.trim(), code, organization.trim());
   };
 
   const inviteText = teamCode
@@ -831,6 +857,35 @@ function TeamSheet({ onClose, onTeamCreated }: { onClose: () => void; onTeamCrea
                 onKeyDown={e => { if (e.key === 'Enter') handleCreate(); }}
                 className="w-full bg-[var(--c2)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#FACC15] outline-none text-sm transition-colors"
               />
+            </div>
+            <div className="relative">
+              <label className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide block mb-1.5">
+                Organization <span className="text-[var(--ct2)] normal-case font-normal">(optional)</span>
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Acme Corp, City of Springfield…"
+                value={organization}
+                onChange={e => handleOrgChange(e.target.value)}
+                onBlur={() => setTimeout(() => setShowOrgDropdown(false), 150)}
+                onFocus={() => orgSuggestions.length > 0 && setShowOrgDropdown(true)}
+                className="w-full bg-[var(--c2)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#FACC15] outline-none text-sm transition-colors"
+              />
+              {showOrgDropdown && (
+                <ul className="absolute z-10 top-full mt-1 w-full bg-[var(--c1)] border border-[var(--c5)] rounded-xl shadow-xl overflow-hidden">
+                  {orgSuggestions.map(s => (
+                    <li key={s}>
+                      <button
+                        type="button"
+                        onMouseDown={() => { setOrganization(s); setShowOrgDropdown(false); }}
+                        className="w-full text-left px-4 py-2.5 text-sm text-[var(--ct0)] hover:bg-[var(--c4)] transition-colors"
+                      >
+                        {s}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
             <button
               onClick={handleCreate}
@@ -1011,7 +1066,7 @@ function JoinTeamSheet({ onClose }: { onClose: () => void }) {
 }
 
 // ─── Screen 6: Profile setup ──────────────────────────────────────────────────
-function ProfileScreen({ onFinish, onBack, onTeamCreated }: { onFinish: (displayName: string, firstName: string, lastName: string) => void; onBack: () => void; onTeamCreated: (name: string, code: string) => void }) {
+function ProfileScreen({ onFinish, onBack, onTeamCreated }: { onFinish: (displayName: string, firstName: string, lastName: string) => void; onBack: () => void; onTeamCreated: (name: string, code: string, org: string) => void }) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName]   = useState('');
   const [name, setName]           = useState('');
@@ -1136,7 +1191,7 @@ function ProfileScreen({ onFinish, onBack, onTeamCreated }: { onFinish: (display
       {showTeamSheet && (
         <TeamSheet
           onClose={() => setShowTeamSheet(false)}
-          onTeamCreated={(n, c) => { setCreatedTeam({ name: n, code: c }); onTeamCreated(n, c); setShowTeamSheet(false); }}
+          onTeamCreated={(n, c, org) => { setCreatedTeam({ name: n, code: c }); onTeamCreated(n, c, org); setShowTeamSheet(false); }}
         />
       )}
       {showJoinSheet && <JoinTeamSheet onClose={() => setShowJoinSheet(false)} />}
@@ -1174,6 +1229,7 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
   const [customExerciseLabels, setCustomExerciseLabels] = useState<Record<string, string>>({});
   const [createdTeamName, setCreatedTeamName] = useState('');
   const [createdTeamCode, setCreatedTeamCode] = useState('');
+  const [createdTeamOrg,  setCreatedTeamOrg]  = useState('');
 
   const toggleExercise = (key: string) => {
     setEnabledExercises(prev => ({ ...prev, [key]: !prev[key] }));
@@ -1231,10 +1287,11 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
     // Save team created during onboarding to Supabase
     if (teamId && createdTeamName && createdTeamCode) {
       await supabase.from('teams').upsert({
-        id:         teamId,
-        name:       createdTeamName,
-        code:       createdTeamCode,
-        admin_name: adminName,
+        id:           teamId,
+        name:         createdTeamName,
+        code:         createdTeamCode,
+        admin_name:   adminName,
+        organization: createdTeamOrg || null,
       });
     }
 
@@ -1334,7 +1391,7 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
       {step === 1 && <HowItWorksScreen    onNext={() => setStep(2)} onSkip={() => setStep(2)} />}
       {step === 4 && <NotificationsScreen onNext={() => setStep(5)} onSkip={() => setStep(5)} onBack={() => setStep(3)} />}
       {step === 5 && <SignInScreen        onNext={() => setStep(6)} onBack={() => setStep(4)} />}
-      {step === 6 && <ProfileScreen       onFinish={(dn, fn, ln) => finish(dn, fn, ln)} onBack={() => setStep(5)} onTeamCreated={(name, code) => { setCreatedTeamName(name); setCreatedTeamCode(code); }} />}
+      {step === 6 && <ProfileScreen       onFinish={(dn, fn, ln) => finish(dn, fn, ln)} onBack={() => setStep(5)} onTeamCreated={(name, code, org) => { setCreatedTeamName(name); setCreatedTeamCode(code); setCreatedTeamOrg(org); }} />}
     </>
   );
 }
