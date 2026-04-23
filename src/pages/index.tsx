@@ -88,6 +88,9 @@ export default function Today() {
           enabledExercises={enabledExercises}
           customExerciseLabels={settings.customExerciseLabels}
           targetReps={todayReps}
+          onComplete={completeSession}
+          onSnooze={snoozeSession}
+          onSkip={skipSession}
         />
 
         {/* Day progress bar */}
@@ -99,6 +102,7 @@ export default function Today() {
             sessions={todaySessions}
             enabledExercises={enabledExercises}
             targetReps={todayReps}
+            excludeId={todaySessions.find(s => s.status === 'pending' || s.status === 'snoozed')?.id}
             onComplete={completeSession}
             onUndo={undoSession}
             onSkip={skipSession}

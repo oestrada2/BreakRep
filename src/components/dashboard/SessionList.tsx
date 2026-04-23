@@ -7,6 +7,7 @@ interface SessionListProps {
   enabledExercises: EnabledExercises;
   customExerciseLabels?: Record<string, string>;
   targetReps: number;
+  excludeId?: string;
   onComplete: (id: string, pushups: number, squats: number, situps: number) => void;
   onUndo: (id: string) => void;
   onSkip: (id: string) => void;
@@ -29,7 +30,7 @@ const BUILTIN_EXERCISES = [
 
 const DEFAULT_EXERCISES = { pushups: true, squats: true, situps: true };
 
-export function SessionList({ sessions, enabledExercises, customExerciseLabels, targetReps, onComplete, onUndo, onSkip, onSnooze }: SessionListProps) {
+export function SessionList({ sessions, enabledExercises, customExerciseLabels, targetReps, excludeId, onComplete, onUndo, onSkip, onSnooze }: SessionListProps) {
   const enabled = enabledExercises ?? DEFAULT_EXERCISES;
   const allExercises = [
     ...BUILTIN_EXERCISES.filter(ex => enabled[ex.key]),
@@ -40,7 +41,7 @@ export function SessionList({ sessions, enabledExercises, customExerciseLabels, 
   // editReps keyed by `${sessionId}-${exercise}`
   const [editReps, setEditReps] = useState<Record<string, string>>({});
 
-  const visible = sessions.slice(0, 12);
+  const visible = sessions.filter(s => s.id !== excludeId).slice(0, 12);
 
   function getRep(id: string, key: string, fallback: number) {
     return editReps[`${id}-${key}`] ?? String(fallback);
