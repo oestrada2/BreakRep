@@ -69,8 +69,8 @@ export function DayProgress({ stats, targetReps }: DayProgressProps) {
           )}
           {stats.situpReps > 0 && (
             <div className="text-center">
-              <p className="text-[#FACC15] text-base font-bold">{stats.situpReps}</p>
-              <p className="text-[var(--ct2)] text-xs">Sit-ups</p>
+              <p className="text-[#FACC15] text-base font-bold">{stats.situpReps}s</p>
+              <p className="text-[var(--ct2)] text-xs">Plank</p>
             </div>
           )}
         </div>

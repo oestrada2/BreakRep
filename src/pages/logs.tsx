@@ -213,7 +213,7 @@ export default function Logs() {
                   {[
                     thisWeek.pushupReps > 0 ? `💪 ${thisWeek.pushupReps}` : null,
                     thisWeek.squatReps  > 0 ? `🦵 ${thisWeek.squatReps}`  : null,
-                    thisWeek.situpReps  > 0 ? `🔥 ${thisWeek.situpReps}`  : null,
+                    thisWeek.situpReps  > 0 ? `⏱️ ${thisWeek.situpReps}s` : null,
                   ].filter(Boolean).join(' · ')}
                 </p>
               )}
@@ -239,7 +239,7 @@ export default function Logs() {
                   {[
                     allTimePushupReps > 0 ? `💪 ${allTimePushupReps}` : null,
                     allTimeSquatReps  > 0 ? `🦵 ${allTimeSquatReps}`  : null,
-                    allTimeSitupReps  > 0 ? `🔥 ${allTimeSitupReps}`  : null,
+                    allTimeSitupReps  > 0 ? `⏱️ ${allTimeSitupReps}s` : null,
                   ].filter(Boolean).join(' · ')}
                 </p>
               )}

@@ -24,7 +24,7 @@ const STATUS_CONFIG = {
 const BUILTIN_EXERCISES = [
   { key: 'pushups', label: 'Push-ups', emoji: '💪' },
   { key: 'squats',  label: 'Squats',   emoji: '🦵' },
-  { key: 'situps',  label: 'Sit-ups',  emoji: '🔥' },
+  { key: 'situps',  label: 'Plank',    emoji: '⏱️' },
 ];
 
 const DEFAULT_EXERCISES = { pushups: true, squats: true, situps: true };
@@ -132,8 +132,8 @@ export function SessionList({ sessions, enabledExercises, customExerciseLabels, 
                           s.status === 'completed' ? 'text-[#22C55E]' : 'text-[var(--ct2)]'
                         }`}>
                           {s.status === 'completed' && completedVal !== null && completedVal !== undefined
-                            ? `${completedVal} reps`
-                            : `${targetReps} reps`}
+                            ? (ex.key === 'situps' ? `${completedVal} sec` : `${completedVal} reps`)
+                            : (ex.key === 'situps' ? `${targetReps} sec` : `${targetReps} reps`)}
                         </span>
                       )}
                     </div>

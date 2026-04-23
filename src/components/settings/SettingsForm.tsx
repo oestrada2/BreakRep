@@ -362,7 +362,7 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification }
             {([
               { key: 'pushups', label: 'Push-ups', emoji: '💪' },
               { key: 'squats',  label: 'Squats',   emoji: '🦵' },
-              { key: 'situps',  label: 'Sit-ups',  emoji: '🔥' },
+              { key: 'situps',  label: 'Plank',    emoji: '⏱️' },
             ] as { key: string; label: string; emoji: string }[]).map(ex => {
               const enabledEx = settings.enabledExercises ?? { pushups: true, squats: true, situps: true };
               const enabledCount = Object.values(enabledEx).filter(Boolean).length;

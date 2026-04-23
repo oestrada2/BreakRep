@@ -34,7 +34,7 @@ export function DayCard({ date, sessions, stats, filterStatus, enabledExercises,
   const builtinExercises = [
     { key: 'pushups', emoji: '💪', label: 'Push-ups', getCompleted: (s: SessionLog) => s.completedReps },
     { key: 'squats',  emoji: '🦵', label: 'Squats',   getCompleted: (s: SessionLog) => s.completedSquatReps },
-    { key: 'situps',  emoji: '🔥', label: 'Sit-ups',  getCompleted: (s: SessionLog) => s.completedSitupReps },
+    { key: 'situps',  emoji: '⏱️', label: 'Plank',    getCompleted: (s: SessionLog) => s.completedSitupReps },
   ].filter(ex => !enabledExercises || enabledExercises[ex.key] !== false);
   const customExercises = Object.entries(customExerciseLabels ?? {})
     .filter(([key]) => !enabledExercises || enabledExercises[key] !== false)
@@ -61,7 +61,7 @@ export function DayCard({ date, sessions, stats, filterStatus, enabledExercises,
               {stats.totalReps > 0 && ` · ${[
                 stats.pushupReps > 0 ? `💪 ${stats.pushupReps}` : null,
                 stats.squatReps  > 0 ? `🦵 ${stats.squatReps}`  : null,
-                stats.situpReps  > 0 ? `🔥 ${stats.situpReps}`  : null,
+                stats.situpReps  > 0 ? `⏱️ ${stats.situpReps}s` : null,
               ].filter(Boolean).join(' · ')}`}
             </p>
           )}
@@ -104,7 +104,7 @@ export function DayCard({ date, sessions, stats, filterStatus, enabledExercises,
                       <span className="text-xs">{ex.emoji}</span>
                       <span className="text-[var(--ct1)] text-xs flex-1">{ex.label}</span>
                       <span className={`text-xs font-semibold tabular-nums ${s.status === 'completed' ? 'text-[#22C55E]' : 'text-[var(--ct2)]'}`}>
-                        {s.status === 'completed' && ex.completed != null ? ex.completed : s.targetReps} reps
+                        {s.status === 'completed' && ex.completed != null ? ex.completed : s.targetReps} {ex.key === 'situps' ? 'sec' : 'reps'}
                       </span>
                     </div>
                   ))}

@@ -39,7 +39,7 @@ function useCountdownToSession(session: SessionLog | null): string {
 const BUILTIN_EXERCISES = [
   { key: 'pushups', label: 'Push-ups', emoji: '💪' },
   { key: 'squats',  label: 'Squats',   emoji: '🦵' },
-  { key: 'situps',  label: 'Sit-ups',  emoji: '🔥' },
+  { key: 'situps',  label: 'Plank',    emoji: '⏱️' },
 ];
 
 const DEFAULT_EXERCISES = { pushups: true, squats: true, situps: true };
@@ -121,7 +121,9 @@ export function NextSessionCard({ sessions, enabledExercises, customExerciseLabe
             <div key={ex.key} className="flex items-center gap-3 bg-[var(--c2)]/60 rounded-xl px-3 py-2.5">
               <span className="text-xl w-7 text-center">{ex.emoji}</span>
               <span className="text-[var(--ct0)] text-sm font-semibold flex-1">{ex.label}</span>
-              <span className="text-[var(--ct1)] text-sm font-bold tabular-nums">{targetReps} reps</span>
+              <span className="text-[var(--ct1)] text-sm font-bold tabular-nums">
+                {ex.key === 'situps' ? `${targetReps} sec` : `${targetReps} reps`}
+              </span>
             </div>
           ))}
         </div>

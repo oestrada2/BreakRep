@@ -158,7 +158,7 @@ function HowItWorksScreen({ onNext, onSkip }: { onNext: () => void; onSkip: () =
 const EXERCISES: { key: string; label: string; emoji: string; desc: string }[] = [
   { key: 'pushups', label: 'Push-ups',  emoji: '💪', desc: 'Upper body — chest, shoulders, triceps' },
   { key: 'squats',  label: 'Squats',    emoji: '🦵', desc: 'Lower body — quads, glutes, hamstrings' },
-  { key: 'situps',  label: 'Sit-ups',   emoji: '🔥', desc: 'Core — abs and hip flexors' },
+  { key: 'situps',  label: 'Plank',     emoji: '⏱️', desc: 'Core — hold position for time (seconds)' },
 ];
 
 function WorkoutSelectScreen({
