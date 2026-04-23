@@ -770,9 +770,11 @@ function TeamSheet({ onClose, onTeamCreated }: { onClose: () => void; onTeamCrea
 
   useEffect(() => {
     const email = session?.user?.email ?? '';
-    if (email) {
-      const domain = email.split('@')[1]?.split('.')[0] ?? '';
-      if (domain) setOrganization(domain.charAt(0).toUpperCase() + domain.slice(1));
+    if (!email) return;
+    const domain = email.split('@')[1]?.split('.')[0]?.toLowerCase() ?? '';
+    const consumerProviders = new Set(['gmail', 'yahoo', 'hotmail', 'outlook', 'icloud', 'protonmail', 'aol', 'live', 'msn', 'me', 'mail', 'ymail', 'googlemail']);
+    if (domain && !consumerProviders.has(domain)) {
+      setOrganization(domain.charAt(0).toUpperCase() + domain.slice(1));
     }
   }, [session]);
 

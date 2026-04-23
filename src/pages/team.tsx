@@ -279,12 +279,14 @@ function CreateTeamSheet({ onClose, onCreated }: { onClose: () => void; onCreate
   const [created, setCreated] = useState<Team | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Pre-fill org from email domain on mount
+  // Pre-fill org from email domain, skipping consumer providers
   useEffect(() => {
     const email = session?.user?.email ?? '';
-    if (email) {
-      const domain = email.split('@')[1]?.split('.')[0] ?? '';
-      if (domain) setOrganization(domain.charAt(0).toUpperCase() + domain.slice(1));
+    if (!email) return;
+    const domain = email.split('@')[1]?.split('.')[0]?.toLowerCase() ?? '';
+    const consumerProviders = new Set(['gmail', 'yahoo', 'hotmail', 'outlook', 'icloud', 'protonmail', 'aol', 'live', 'msn', 'me', 'mail', 'ymail', 'googlemail']);
+    if (domain && !consumerProviders.has(domain)) {
+      setOrganization(domain.charAt(0).toUpperCase() + domain.slice(1));
     }
   }, [session]);
 
@@ -453,9 +455,54 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
   const [confirmTransfer, setConfirmTransfer] = useState<string | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [supabasePending, setSupabasePending] = useState<SupabaseRequest[]>([]);
+  const [supabaseAdminName, setSupabaseAdminName] = useState<string | null>(null);
 
-  // Fetch pending join requests from Supabase and subscribe to real-time updates
+  // Fetch admin name from Supabase — non-admin members don't have admin in local state
   useEffect(() => {
+    supabase
+      .from('teams')
+      .select('admin_name')
+      .eq('code', team.code)
+      .single()
+      .then(({ data }) => { if (data?.admin_name) setSupabaseAdminName(data.admin_name); });
+  }, [team.code]);
+
+  // Non-admin pending members: detect their own approval in real time
+  useEffect(() => {
+    if (team.isAdmin) return;
+    const myEntry = team.members.find(m => m.role === 'pending');
+    if (!myEntry) return;
+
+    // Check immediately in case already approved
+    supabase
+      .from('team_requests')
+      .select('status')
+      .eq('team_code', team.code)
+      .eq('requester_name', myEntry.displayName)
+      .single()
+      .then(({ data }) => {
+        if (data?.status === 'approved') {
+          onUpdate({ ...team, members: team.members.map(m => m.role === 'pending' ? { ...m, role: 'member' as const } : m) });
+        }
+      });
+
+    const channel = supabase
+      .channel(`approval:${team.code}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'team_requests', filter: `team_code=eq.${team.code}` }, payload => {
+        const rec = payload.new as any;
+        if (rec.requester_name === myEntry.displayName && rec.status === 'approved') {
+          onUpdate({ ...team, members: team.members.map(m => m.role === 'pending' ? { ...m, role: 'member' as const } : m) });
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [team.code, team.isAdmin]);
+
+  // Admin only: fetch pending join requests and subscribe to real-time updates
+  useEffect(() => {
+    if (!team.isAdmin) return;
+
     const fetchRequests = async () => {
       const { data } = await supabase
         .from('team_requests')
@@ -465,7 +512,6 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
         .order('created_at', { ascending: true });
       const incoming = data ?? [];
       setSupabasePending(incoming);
-      // Auto-expand card when there are new requests
       if (incoming.length > 0) setCollapsed(false);
     };
 
@@ -477,7 +523,7 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [team.code]);
+  }, [team.code, team.isAdmin]);
 
   async function approveRequest(req: SupabaseRequest) {
     await supabase.from('team_requests').update({ status: 'approved' }).eq('id', req.id);
@@ -500,6 +546,13 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
   const activeMembers = team.members.filter(m => m.role === 'member');
   const pending       = team.members.filter(m => m.role === 'pending');
   const totalActive   = team.members.filter(m => m.role !== 'pending').length;
+
+  // Fall back to Supabase admin name when local admin entry is absent (non-admin members)
+  const adminDisplay = adminMembers.length > 0
+    ? adminMembers
+    : supabaseAdminName
+      ? [{ id: 'sb-admin', displayName: supabaseAdminName, role: 'admin' as const, joinedAt: 0 }]
+      : [];
 
   // Next in line if admin leaves — earliest joinedAt among active members
   const nextInLine = [...activeMembers].sort((a, b) => a.joinedAt - b.joinedAt)[0] ?? null;
@@ -592,7 +645,7 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
           {/* Admins */}
           <SectionLabel title="Admin" />
           <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl overflow-hidden mb-1">
-            {adminMembers.length > 0 ? adminMembers.map(m => <MemberCard key={m.id} member={m} isAdmin={false} />) : <p className="px-4 py-3.5 text-[var(--ct2)] text-sm italic">No admin found.</p>}
+            {adminDisplay.length > 0 ? adminDisplay.map(m => <MemberCard key={m.id} member={m} isAdmin={false} />) : <p className="px-4 py-3.5 text-[var(--ct2)] text-sm italic">No admin found.</p>}
           </div>
 
           {/* Members */}
@@ -614,9 +667,9 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
             )}
           </div>
 
-          {/* Pending join requests — visible to all members, powered by Supabase */}
-          <SectionLabel title="Join Requests" count={supabasePending.length} />
-          <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl overflow-hidden">
+          {/* Pending join requests — admin only */}
+          {team.isAdmin && <SectionLabel title="Join Requests" count={supabasePending.length} />}
+          {team.isAdmin && <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl overflow-hidden">
             {supabasePending.length > 0 ? supabasePending.map(req => {
               const initials = req.requester_name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase() || '?';
               return (
@@ -640,7 +693,7 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
             }) : (
               <p className="px-4 py-5 text-center text-[var(--ct2)] text-sm">No pending requests.</p>
             )}
-          </div>
+          </div>}
         </>
       )}
     </div>
