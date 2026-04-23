@@ -122,7 +122,7 @@ export function NextSessionCard({ sessions, enabledExercises, customExerciseLabe
               <span className="text-xl w-7 text-center">{ex.emoji}</span>
               <span className="text-[var(--ct0)] text-sm font-semibold flex-1">{ex.label}</span>
               <span className="text-[var(--ct1)] text-sm font-bold tabular-nums">
-                {ex.key === 'situps' ? `${targetReps} sec` : `${targetReps} reps`}
+                {ex.key === 'situps' ? `${Math.max(targetReps, 60)} sec` : `${targetReps} reps`}
               </span>
             </div>
           ))}

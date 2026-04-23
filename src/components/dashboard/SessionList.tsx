@@ -106,7 +106,8 @@ export function SessionList({ sessions, enabledExercises, customExerciseLabels, 
                     ex.key === 'squats'  ? s.completedSquatReps :
                     ex.key === 'situps'  ? s.completedSitupReps :
                                           null; // custom — not stored in log
-                  const repVal = getRep(s.id, ex.key, targetReps);
+                  const repDefault = ex.key === 'situps' ? Math.max(targetReps, 60) : targetReps;
+                  const repVal = getRep(s.id, ex.key, repDefault);
 
                   return (
                     <div key={ex.key} className="flex items-center gap-2">
@@ -133,7 +134,7 @@ export function SessionList({ sessions, enabledExercises, customExerciseLabels, 
                         }`}>
                           {s.status === 'completed' && completedVal !== null && completedVal !== undefined
                             ? (ex.key === 'situps' ? `${completedVal} sec` : `${completedVal} reps`)
-                            : (ex.key === 'situps' ? `${targetReps} sec` : `${targetReps} reps`)}
+                            : (ex.key === 'situps' ? `${Math.max(targetReps, 60)} sec` : `${targetReps} reps`)}
                         </span>
                       )}
                     </div>
@@ -150,7 +151,7 @@ export function SessionList({ sessions, enabledExercises, customExerciseLabels, 
                         s.id,
                         enabled.pushups ? parseRep(s.id, 'pushups', targetReps) : 0,
                         enabled.squats  ? parseRep(s.id, 'squats',  targetReps) : 0,
-                        enabled.situps  ? parseRep(s.id, 'situps',  targetReps) : 0,
+                        enabled.situps  ? parseRep(s.id, 'situps',  Math.max(targetReps, 60)) : 0,
                       );
                       clearReps(s.id);
                     }}
