@@ -30,16 +30,16 @@ export function generateDaySessions(
     const endTotal   = r.endHour   * 60 + (r.endMinute   ?? 0);
 
     if (overnight) {
-      // Early morning block: 0:00 → endHour:endMinute
-      for (let hour = 0; hour <= r.endHour; hour++) {
-        for (const minute of minutes) {
-          if (hour * 60 + minute <= endTotal) slots.push({ hour, minute });
-        }
-      }
-      // Evening block: startHour:startMinute → 23:59
+      // Evening block FIRST (startHour → 23) — start of the user's window
       for (let hour = r.startHour; hour <= 23; hour++) {
         for (const minute of minutes) {
           if (hour * 60 + minute >= startTotal) slots.push({ hour, minute });
+        }
+      }
+      // Early morning block SECOND (0 → endHour) — end of the user's window
+      for (let hour = 0; hour <= r.endHour; hour++) {
+        for (const minute of minutes) {
+          if (hour * 60 + minute <= endTotal) slots.push({ hour, minute });
         }
       }
     } else {
@@ -55,13 +55,13 @@ export function generateDaySessions(
     const endMinute   = r.endMinute   ?? 0;
 
     if (overnight) {
-      // Early morning block: 0:00 → endHour
-      for (let hour = 0; hour <= r.endHour; hour++) {
-        if (hour === r.endHour && startMinute > endMinute) continue;
+      // Evening block FIRST (startHour → 23) — start of the user's window
+      for (let hour = r.startHour; hour <= 23; hour++) {
         slots.push({ hour, minute: startMinute });
       }
-      // Evening block: startHour → 23:00
-      for (let hour = r.startHour; hour <= 23; hour++) {
+      // Early morning block SECOND (0 → endHour) — end of the user's window
+      for (let hour = 0; hour <= r.endHour; hour++) {
+        if (hour === r.endHour && startMinute > endMinute) continue;
         slots.push({ hour, minute: startMinute });
       }
     } else {

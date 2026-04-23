@@ -45,11 +45,14 @@ export default function Logs() {
       const existingIds = new Set((map[d] ?? []).map(s => s.id));
       map[d] = [...(map[d] ?? []), ...todaySessions.filter(s => !existingIds.has(s.id))];
     }
-    Object.values(map).forEach(arr => arr.sort((a, b) =>
-      a.scheduledHour !== b.scheduledHour
-        ? a.scheduledHour - b.scheduledHour
-        : (a.scheduledMinute ?? 0) - (b.scheduledMinute ?? 0)
-    ));
+    const overnight   = settings.reminders.endHour < settings.reminders.startHour;
+    const windowStart = settings.reminders.startHour;
+    const adjustHour  = (h: number) => overnight && h < windowStart ? h + 24 : h;
+    Object.values(map).forEach(arr => arr.sort((a, b) => {
+      const ah = adjustHour(a.scheduledHour) * 60 + (a.scheduledMinute ?? 0);
+      const bh = adjustHour(b.scheduledHour) * 60 + (b.scheduledMinute ?? 0);
+      return ah - bh;
+    }));
     return map;
   }, [logs, todaySessions]);
 
