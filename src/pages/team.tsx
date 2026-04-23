@@ -107,9 +107,17 @@ function JoinTeamSheet({ onClose, onJoined }: { onClose: () => void; onJoined: (
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<{ id: string; name: string; code: string } | null>(null);
   const [code, setCode] = useState('');
-  const [displayName, setDisplayName] = useState('');
   const [joined, setJoined] = useState(false);
   const [error, setError] = useState('');
+
+  const displayName = (() => {
+    try {
+      const p = JSON.parse(localStorage.getItem('puh_profile') ?? 'null');
+      if (!p) return '';
+      const fullName = `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim();
+      return fullName || p.displayName || '';
+    } catch { return ''; }
+  })();
 
   const handleSearch = async (q: string) => {
     setQuery(q);
@@ -130,7 +138,6 @@ function JoinTeamSheet({ onClose, onJoined }: { onClose: () => void; onJoined: (
     const teamName = tab === 'search' ? selected?.name ?? `Team ${teamCode}` : `Team ${teamCode}`;
     const teamId   = tab === 'search' ? selected?.id  ?? ('team-' + Date.now()) : ('team-' + Date.now());
     if (!teamCode || teamCode.length < 4) { setError('Please select a team or enter a valid code.'); return; }
-    if (!displayName.trim()) { setError('Please enter your display name.'); return; }
     const newTeam: Team = {
       id: teamId,
       name: teamName,
@@ -170,12 +177,6 @@ function JoinTeamSheet({ onClose, onJoined }: { onClose: () => void; onJoined: (
             </div>
 
             <div className="flex flex-col gap-3">
-              {/* Display name — always shown */}
-              <div>
-                <label className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide block mb-1.5">Your display name</label>
-                <input type="text" placeholder="e.g. Alex Rivera" value={displayName} onChange={e => { setDisplayName(e.target.value); setError(''); }} className="w-full bg-[var(--c2)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#22C55E] outline-none text-sm transition-colors" />
-              </div>
-
               {tab === 'search' ? (
                 <div>
                   <label className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide block mb-1.5">Team name</label>
@@ -221,7 +222,7 @@ function JoinTeamSheet({ onClose, onJoined }: { onClose: () => void; onJoined: (
 
             <button
               onClick={handleJoin}
-              disabled={!displayName.trim() || (tab === 'search' ? !selected : code.trim().length < 4)}
+              disabled={tab === 'search' ? !selected : code.trim().length < 4}
               className="w-full py-3.5 rounded-xl font-bold text-sm bg-[#22C55E] text-[#0B1C2D] hover:bg-[#16A34A] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Request to join
