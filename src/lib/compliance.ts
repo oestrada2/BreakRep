@@ -49,10 +49,10 @@ export function computeDayStats(
   const missed = logs.filter(l => l.status === 'missed').length;
   const skipped = logs.filter(l => l.status === 'skipped').length;
   const snoozed = logs.filter(l => l.status === 'snoozed').length;
-  const totalReps = logs.reduce((sum, l) => {
-    if (l.status !== 'completed') return sum;
-    return sum + (l.completedReps ?? 0) + (l.completedSquatReps ?? 0) + (l.completedSitupReps ?? 0);
-  }, 0);
+  const pushupReps = logs.reduce((sum, l) => l.status === 'completed' ? sum + (l.completedReps ?? 0) : sum, 0);
+  const squatReps = logs.reduce((sum, l) => l.status === 'completed' ? sum + (l.completedSquatReps ?? 0) : sum, 0);
+  const situpReps = logs.reduce((sum, l) => l.status === 'completed' ? sum + (l.completedSitupReps ?? 0) : sum, 0);
+  const totalReps = pushupReps + squatReps + situpReps;
 
   return {
     date,
@@ -63,6 +63,9 @@ export function computeDayStats(
     snoozed,
     complianceRate: total > 0 ? completed / total : 1,
     totalReps,
+    pushupReps,
+    squatReps,
+    situpReps,
   };
 }
 

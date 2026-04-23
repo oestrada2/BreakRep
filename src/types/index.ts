@@ -114,7 +114,10 @@ export interface DailyStats {
   skipped: number;
   snoozed: number;
   complianceRate: number;        // 0.0–1.0
-  totalReps: number;             // sum of completedReps for completed sessions
+  totalReps: number;
+  pushupReps: number;
+  squatReps: number;
+  situpReps: number;
 }
 
 export interface AppState {

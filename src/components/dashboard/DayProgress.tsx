@@ -37,7 +37,7 @@ export function DayProgress({ stats, targetReps }: DayProgressProps) {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         <div className="text-center">
           <p className="text-[#22C55E] text-base font-bold">{stats.completed}</p>
           <p className="text-[var(--ct2)] text-xs">Done</p>
@@ -50,11 +50,31 @@ export function DayProgress({ stats, targetReps }: DayProgressProps) {
           <p className="text-[var(--ct1)] text-base font-bold">{remaining > 0 ? remaining : 0}</p>
           <p className="text-[var(--ct2)] text-xs">Left</p>
         </div>
-        <div className="text-center">
-          <p className="text-[#FACC15] text-base font-bold">{stats.totalReps}</p>
-          <p className="text-[var(--ct2)] text-xs">Reps</p>
-        </div>
       </div>
+
+      {/* Per-exercise reps row */}
+      {stats.totalReps > 0 && (
+        <div className="flex justify-around mt-2">
+          {stats.pushupReps > 0 && (
+            <div className="text-center">
+              <p className="text-[#FACC15] text-base font-bold">{stats.pushupReps}</p>
+              <p className="text-[var(--ct2)] text-xs">Push-ups</p>
+            </div>
+          )}
+          {stats.squatReps > 0 && (
+            <div className="text-center">
+              <p className="text-[#FACC15] text-base font-bold">{stats.squatReps}</p>
+              <p className="text-[var(--ct2)] text-xs">Squats</p>
+            </div>
+          )}
+          {stats.situpReps > 0 && (
+            <div className="text-center">
+              <p className="text-[#FACC15] text-base font-bold">{stats.situpReps}</p>
+              <p className="text-[var(--ct2)] text-xs">Sit-ups</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
