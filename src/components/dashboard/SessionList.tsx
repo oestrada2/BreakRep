@@ -6,6 +6,7 @@ interface SessionListProps {
   sessions: SessionLog[];
   enabledExercises: EnabledExercises;
   customExerciseLabels?: Record<string, string>;
+  targetReps: number;
   onComplete: (id: string, pushups: number, squats: number, situps: number) => void;
   onUndo: (id: string) => void;
   onSkip: (id: string) => void;
@@ -28,7 +29,7 @@ const BUILTIN_EXERCISES = [
 
 const DEFAULT_EXERCISES = { pushups: true, squats: true, situps: true };
 
-export function SessionList({ sessions, enabledExercises, customExerciseLabels, onComplete, onUndo, onSkip, onSnooze }: SessionListProps) {
+export function SessionList({ sessions, enabledExercises, customExerciseLabels, targetReps, onComplete, onUndo, onSkip, onSnooze }: SessionListProps) {
   const enabled = enabledExercises ?? DEFAULT_EXERCISES;
   const allExercises = [
     ...BUILTIN_EXERCISES.filter(ex => enabled[ex.key]),
@@ -105,7 +106,7 @@ export function SessionList({ sessions, enabledExercises, customExerciseLabels, 
                     ex.key === 'squats'  ? s.completedSquatReps :
                     ex.key === 'situps'  ? s.completedSitupReps :
                                           null; // custom — not stored in log
-                  const repVal = getRep(s.id, ex.key, s.targetReps);
+                  const repVal = getRep(s.id, ex.key, targetReps);
 
                   return (
                     <div key={ex.key} className="flex items-center gap-2">
@@ -132,7 +133,7 @@ export function SessionList({ sessions, enabledExercises, customExerciseLabels, 
                         }`}>
                           {s.status === 'completed' && completedVal !== null && completedVal !== undefined
                             ? `${completedVal} reps`
-                            : `${s.targetReps} reps`}
+                            : `${targetReps} reps`}
                         </span>
                       )}
                     </div>
@@ -147,9 +148,9 @@ export function SessionList({ sessions, enabledExercises, customExerciseLabels, 
                     onClick={() => {
                       onComplete(
                         s.id,
-                        enabled.pushups ? parseRep(s.id, 'pushups', s.targetReps) : 0,
-                        enabled.squats  ? parseRep(s.id, 'squats',  s.targetReps) : 0,
-                        enabled.situps  ? parseRep(s.id, 'situps',  s.targetReps) : 0,
+                        enabled.pushups ? parseRep(s.id, 'pushups', targetReps) : 0,
+                        enabled.squats  ? parseRep(s.id, 'squats',  targetReps) : 0,
+                        enabled.situps  ? parseRep(s.id, 'situps',  targetReps) : 0,
                       );
                       clearReps(s.id);
                     }}

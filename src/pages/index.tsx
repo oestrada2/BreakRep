@@ -87,6 +87,7 @@ export default function Today() {
           sessions={todaySessions}
           enabledExercises={enabledExercises}
           customExerciseLabels={settings.customExerciseLabels}
+          targetReps={todayReps}
         />
 
         {/* Day progress bar */}
@@ -97,6 +98,7 @@ export default function Today() {
           <SessionList
             sessions={todaySessions}
             enabledExercises={enabledExercises}
+            targetReps={todayReps}
             onComplete={completeSession}
             onUndo={undoSession}
             onSkip={skipSession}
