@@ -101,11 +101,12 @@ function SectionLabel({ title, count }: { title: string; count?: number }) {
 
 // ── Join sheet ────────────────────────────────────────────────────────────────
 function JoinTeamSheet({ onClose, onJoined }: { onClose: () => void; onJoined: (team: Team) => void }) {
+  const { data: session } = useSession();
   const [tab, setTab] = useState<'search' | 'code'>('search');
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<{ id: string; name: string; code: string; admin_name?: string; organization?: string }[]>([]);
   const [searching, setSearching] = useState(false);
-  const [selected, setSelected] = useState<{ id: string; name: string; code: string } | null>(null);
+  const [selected, setSelected] = useState<{ id: string; name: string; code: string; organization?: string } | null>(null);
   const [code, setCode] = useState('');
   const [joined, setJoined] = useState(false);
   const [error, setError] = useState('');
@@ -133,11 +134,23 @@ function JoinTeamSheet({ onClose, onJoined }: { onClose: () => void; onJoined: (
     setSearching(false);
   };
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     const teamCode = tab === 'search' ? selected?.code ?? '' : code.trim().toUpperCase();
     const teamName = tab === 'search' ? selected?.name ?? `Team ${teamCode}` : `Team ${teamCode}`;
     const teamId   = tab === 'search' ? selected?.id  ?? ('team-' + Date.now()) : ('team-' + Date.now());
+    const teamOrg  = tab === 'search' ? selected?.organization ?? null : null;
     if (!teamCode || teamCode.length < 4) { setError('Please select a team or enter a valid code.'); return; }
+
+    // Update profile with the team they're joining
+    const email = session?.user?.email ?? '';
+    if (email) {
+      await supabase.from('profiles').upsert({
+        email,
+        team:         teamName,
+        organization: teamOrg,
+      });
+    }
+
     const newTeam: Team = {
       id: teamId,
       name: teamName,
@@ -303,6 +316,17 @@ function CreateTeamSheet({ onClose, onCreated }: { onClose: () => void; onCreate
       admin_name: profileName,
       organization: organization.trim() || null,
     });
+
+    // Update the user's profile row with their team and org
+    const email = session?.user?.email ?? '';
+    if (email) {
+      await supabase.from('profiles').upsert({
+        email,
+        team:         team.name,
+        organization: organization.trim() || null,
+      });
+    }
+
     setCreated(team);
     onCreated(team);
   };

@@ -1220,10 +1220,11 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
     if (email) {
       await supabase.from('profiles').upsert({
         email,
-        first_name:   firstName   || null,
-        last_name:    lastName    || null,
-        display_name: profileName || null,
+        first_name:   firstName        || null,
+        last_name:    lastName         || null,
+        display_name: profileName      || null,
         avatar_url:   (session?.user as any)?.image || null,
+        team:         createdTeamName  || null,
       });
     }
 
