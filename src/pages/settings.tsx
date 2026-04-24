@@ -18,7 +18,6 @@ export default function Settings() {
         {/* DEV ONLY — remove before launch */}
         <button
           onClick={() => {
-            try { sessionStorage.setItem('ob_dev_snapshot', JSON.stringify(settings)); } catch {}
             updateSettings({ onboardingComplete: false });
             router.push('/');
           }}
