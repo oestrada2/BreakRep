@@ -58,9 +58,9 @@ export default function Logs() {
   const allTimeSquatReps  = useMemo(() => allStats.reduce((n, s) => n + s.squatReps, 0),   [allStats]);
   const allTimeSitupReps  = useMemo(() => allStats.reduce((n, s) => n + s.situpReps, 0),   [allStats]);
 
-  const personalBest = useMemo(() =>
-    Math.max(0, ...Object.values(logs).map(s => s.completedReps ?? 0)),
-  [logs]);
+  const bestDay = useMemo(() =>
+    Math.max(0, ...allStats.map(s => s.totalReps)),
+  [allStats]);
 
   const consistency = useMemo(() =>
     allStats.length
@@ -219,8 +219,8 @@ export default function Logs() {
               </div>
             )}
             <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
-              <p className="text-[var(--ca)] font-bold text-2xl leading-none">{personalBest > 0 ? personalBest : '—'}</p>
-              <p className="text-[var(--ct2)] text-xs mt-1.5">Best session</p>
+              <p className="text-[var(--ca)] font-bold text-2xl leading-none">{bestDay > 0 ? bestDay : '—'}</p>
+              <p className="text-[var(--ct2)] text-xs mt-1.5">Best day reps</p>
             </div>
             <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
               <p className={`font-bold text-2xl leading-none ${
