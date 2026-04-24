@@ -31,10 +31,14 @@ function formatDateLabel(dateStr: string): string {
 }
 
 export function DayCard({ date, sessions, stats, filterStatus, enabledExercises, customExerciseLabels }: DayCardProps) {
+  const pushupLabel = customExerciseLabels?.['pushups'] ?? 'Push-ups';
+  const squatLabel  = customExerciseLabels?.['squats']  ?? 'Squats';
+  const plankLabel  = customExerciseLabels?.['situps']  ?? 'Plank';
+
   const builtinExercises = [
-    { key: 'pushups', emoji: '💪', label: 'Push-ups', getCompleted: (s: SessionLog) => s.completedReps },
-    { key: 'squats',  emoji: '🦵', label: 'Squats',   getCompleted: (s: SessionLog) => s.completedSquatReps },
-    { key: 'situps',  emoji: '⏱️', label: 'Plank',    getCompleted: (s: SessionLog) => s.completedSitupReps },
+    { key: 'pushups', emoji: '💪', label: pushupLabel, getCompleted: (s: SessionLog) => s.completedReps },
+    { key: 'squats',  emoji: '🦵', label: squatLabel,  getCompleted: (s: SessionLog) => s.completedSquatReps },
+    { key: 'situps',  emoji: '⏱️', label: plankLabel,  getCompleted: (s: SessionLog) => s.completedSitupReps },
   ].filter(ex => !enabledExercises || enabledExercises[ex.key] !== false);
   const customExercises = Object.entries(customExerciseLabels ?? {})
     .filter(([key]) => !enabledExercises || enabledExercises[key] !== false)
@@ -58,10 +62,10 @@ export function DayCard({ date, sessions, stats, filterStatus, enabledExercises,
           {stats && (
             <p className="text-[var(--ct2)] text-xs mt-0.5">
               {stats.completed}/{stats.totalSessions} sessions
-              {stats.totalReps > 0 && ` · ${[
-                stats.pushupReps > 0 ? `💪 ${stats.pushupReps}` : null,
-                stats.squatReps  > 0 ? `🦵 ${stats.squatReps}`  : null,
-                stats.situpReps  > 0 ? `⏱️ ${stats.situpReps}s` : null,
+              {(stats.totalReps > 0 || stats.situpReps > 0) && ` · ${[
+                stats.pushupReps > 0 ? `💪 ${stats.pushupReps} ${pushupLabel.toLowerCase()}` : null,
+                stats.squatReps  > 0 ? `🦵 ${stats.squatReps} ${squatLabel.toLowerCase()}`   : null,
+                stats.situpReps  > 0 ? `⏱️ ${stats.situpReps}s ${plankLabel.toLowerCase()}`  : null,
               ].filter(Boolean).join(' · ')}`}
             </p>
           )}

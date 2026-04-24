@@ -26,6 +26,19 @@ export default function Logs() {
     return m;
   }, [allStats]);
 
+  // ── Dynamic exercise labels ────────────────────────────────────────────────
+  const enabledEx    = settings.enabledExercises ?? { pushups: true, squats: true, situps: true };
+  const customLabels = settings.customExerciseLabels ?? {};
+  const pushupLabel  = customLabels['pushups'] ?? 'Push-up';
+  const squatLabel   = customLabels['squats']  ?? 'Squat';
+  const plankLabel   = customLabels['situps']  ?? 'Plank';
+  const plankEnabled = enabledEx['situps'] !== false;
+
+  const repsBoxLabel = [
+    enabledEx['pushups'] !== false ? pushupLabel : null,
+    enabledEx['squats']  !== false ? squatLabel  : null,
+  ].filter(Boolean).join(' & ') + ' reps';
+
   // ── This week vs last week ─────────────────────────────────────────────────
   const thisWeekStats = useMemo(() =>
     allStats.filter(s => s.date >= offsetISO(-6)),
@@ -179,9 +192,9 @@ export default function Logs() {
                   {repDiff >= 0 ? '↑' : '↓'} {Math.abs(repDiff)} vs last week
                 </p>
               )}
-              <p className="text-[var(--ct2)] text-xs mt-1.5">Push &amp; squat reps</p>
+              <p className="text-[var(--ct2)] text-xs mt-1.5">{repsBoxLabel}</p>
             </div>
-            {thisWeek.situpReps > 0 && (
+            {plankEnabled && thisWeek.situpReps > 0 && (
               <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
                 <p className="text-[#A78BFA] font-bold text-2xl leading-none">
                   {Math.round(thisWeek.situpReps / 60) > 0
@@ -191,7 +204,7 @@ export default function Logs() {
                 {Math.round(thisWeek.situpReps / 60) > 0 && (
                   <p className="text-[var(--ct2)] text-[10px] mt-0.5">min</p>
                 )}
-                <p className="text-[var(--ct2)] text-xs mt-1.5">Plank time</p>
+                <p className="text-[var(--ct2)] text-xs mt-1.5">{plankLabel} time</p>
               </div>
             )}
           </div>
@@ -203,9 +216,9 @@ export default function Logs() {
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
               <p className="text-[#22C55E] font-bold text-2xl leading-none">{totalReps}</p>
-              <p className="text-[var(--ct2)] text-xs mt-1.5">Push &amp; squat reps</p>
+              <p className="text-[var(--ct2)] text-xs mt-1.5">{repsBoxLabel}</p>
             </div>
-            {allTimeSitupReps > 0 && (
+            {plankEnabled && allTimeSitupReps > 0 && (
               <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
                 <p className="text-[#A78BFA] font-bold text-2xl leading-none">
                   {Math.round(allTimeSitupReps / 60) > 0
@@ -215,7 +228,7 @@ export default function Logs() {
                 {Math.round(allTimeSitupReps / 60) > 0 && (
                   <p className="text-[var(--ct2)] text-[10px] mt-0.5">min</p>
                 )}
-                <p className="text-[var(--ct2)] text-xs mt-1.5">Plank time</p>
+                <p className="text-[var(--ct2)] text-xs mt-1.5">{plankLabel} time</p>
               </div>
             )}
             <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
