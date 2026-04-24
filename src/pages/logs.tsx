@@ -28,7 +28,8 @@ export default function Logs() {
   const { logs, allStats, streak, todaySessions, settings } = useAppState();
 
   const todayISO = toLocalISO(new Date());
-  const [selectedDate, setSelectedDate] = useState<string>(todayISO);
+  const yesterdayISO = offsetISO(-1);
+  const [selectedDate, setSelectedDate] = useState<string>(yesterdayISO);
   const [filter, setFilter]             = useState<FilterStatus>('all');
   const [view, setView]                 = useState<'day' | 'calendar' | 'all'>('day');
 
@@ -125,8 +126,8 @@ export default function Logs() {
 
   // ── All-view date list ─────────────────────────────────────────────────────
   const allDates = useMemo(() =>
-    Object.keys(byDate).sort((a, b) => b.localeCompare(a)),
-  [byDate]);
+    Object.keys(byDate).filter(d => d !== todayISO).sort((a, b) => b.localeCompare(a)),
+  [byDate, todayISO]);
 
   return (
     <div className="min-h-screen bg-[var(--c0)] text-[var(--ct0)] font-sans pb-20">
@@ -292,7 +293,13 @@ export default function Logs() {
 
           {/* Day */}
           {view === 'day' && (
-            byDate[selectedDate] ? (
+            selectedDate === todayISO ? (
+              <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-8 text-center">
+                <p className="text-3xl mb-2">📅</p>
+                <p className="text-[var(--ct0)] text-sm font-semibold">Today is on the home screen</p>
+                <p className="text-[var(--ct2)] text-xs mt-1">Select a past day to view its sessions.</p>
+              </div>
+            ) : byDate[selectedDate] ? (
               <DayCard
                 date={selectedDate}
                 sessions={byDate[selectedDate]}
