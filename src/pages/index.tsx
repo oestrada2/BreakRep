@@ -95,9 +95,6 @@ export default function Today() {
           onRepChange={(key, val) => setRepOverrides(prev => ({ ...prev, [key]: val }))}
         />
 
-        {/* Day progress bar */}
-        <DayProgress stats={todayStats} targetReps={todayReps} />
-
         {/* Session timeline */}
         <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-4">
           <SessionList
@@ -112,6 +109,9 @@ export default function Today() {
             onSnooze={snoozeSession}
           />
         </div>
+
+        {/* Day progress bar */}
+        <DayProgress stats={todayStats} targetReps={todayReps} />
       </main>
 
       <NavTabs />
