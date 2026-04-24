@@ -112,7 +112,13 @@ export default function Today() {
         </div>
 
         {/* Day progress bar */}
-        <DayProgress stats={todayStats} targetReps={todayReps} />
+        <DayProgress
+          stats={todayStats}
+          targetReps={todayReps}
+          enabledExercises={enabledExercises}
+          customExerciseLabels={settings.customExerciseLabels}
+          customExerciseTrackingTypes={settings.customExerciseTrackingTypes}
+        />
       </main>
 
       <NavTabs />

@@ -1,11 +1,14 @@
-import type { DailyStats } from '@/types';
+import type { DailyStats, EnabledExercises } from '@/types';
 
 interface DayProgressProps {
   stats: DailyStats;
   targetReps: number;
+  enabledExercises?: EnabledExercises;
+  customExerciseLabels?: Record<string, string>;
+  customExerciseTrackingTypes?: Record<string, 'reps' | 'time'>;
 }
 
-export function DayProgress({ stats, targetReps }: DayProgressProps) {
+export function DayProgress({ stats, targetReps, enabledExercises, customExerciseLabels, customExerciseTrackingTypes }: DayProgressProps) {
   const pct = stats.totalSessions > 0
     ? Math.round((stats.completed / stats.totalSessions) * 100)
     : 0;
@@ -53,28 +56,58 @@ export function DayProgress({ stats, targetReps }: DayProgressProps) {
       </div>
 
       {/* Per-exercise reps row */}
-      {stats.totalReps > 0 && (
-        <div className="flex justify-around mt-2">
-          {stats.pushupReps > 0 && (
-            <div className="text-center">
-              <p className="text-[#F97316] text-base font-bold">{stats.pushupReps}</p>
-              <p className="text-[var(--ct2)] text-xs">Push-ups</p>
-            </div>
-          )}
-          {stats.squatReps > 0 && (
-            <div className="text-center">
-              <p className="text-[#F97316] text-base font-bold">{stats.squatReps}</p>
-              <p className="text-[var(--ct2)] text-xs">Squats</p>
-            </div>
-          )}
-          {stats.situpReps > 0 && (
-            <div className="text-center">
-              <p className="text-[#F97316] text-base font-bold">{stats.situpReps}s</p>
-              <p className="text-[var(--ct2)] text-xs">Plank</p>
-            </div>
-          )}
-        </div>
-      )}
+      {(() => {
+        const pushupLabel = customExerciseLabels?.['pushups'] ?? 'Push-ups';
+        const squatLabel  = customExerciseLabels?.['squats']  ?? 'Squats';
+        const plankLabel  = customExerciseLabels?.['situps']  ?? 'Plank';
+        const customEntries = Object.entries(customExerciseLabels ?? {})
+          .filter(([key]) => key.startsWith('custom_') && enabledExercises?.[key] !== false)
+          .map(([key, label]) => ({
+            key,
+            label,
+            trackingType: (customExerciseTrackingTypes?.[key] ?? 'reps') as 'reps' | 'time',
+            value: stats.customExerciseStats?.[key] ?? 0,
+          }))
+          .filter(ex => ex.value > 0);
+
+        const hasAny = stats.pushupReps > 0 || stats.squatReps > 0 || stats.situpReps > 0 || customEntries.length > 0;
+        if (!hasAny) return null;
+
+        return (
+          <div className="flex flex-wrap justify-around gap-x-4 gap-y-2 mt-2 pt-2 border-t border-[var(--c4)]">
+            {stats.pushupReps > 0 && enabledExercises?.['pushups'] !== false && (
+              <div className="text-center">
+                <p className="text-[#F97316] text-base font-bold">{stats.pushupReps}</p>
+                <p className="text-[var(--ct2)] text-xs">{pushupLabel}</p>
+              </div>
+            )}
+            {stats.squatReps > 0 && enabledExercises?.['squats'] !== false && (
+              <div className="text-center">
+                <p className="text-[#F97316] text-base font-bold">{stats.squatReps}</p>
+                <p className="text-[var(--ct2)] text-xs">{squatLabel}</p>
+              </div>
+            )}
+            {stats.situpReps > 0 && enabledExercises?.['situps'] !== false && (
+              <div className="text-center">
+                <p className="text-[#F97316] text-base font-bold">{stats.situpReps}s</p>
+                <p className="text-[var(--ct2)] text-xs">{plankLabel}</p>
+              </div>
+            )}
+            {customEntries.map(ex => {
+              const isTime = ex.trackingType === 'time';
+              const mins = Math.round(ex.value / 60);
+              return (
+                <div key={ex.key} className="text-center">
+                  <p className="text-[#F97316] text-base font-bold">
+                    {isTime ? (mins > 0 ? `${mins}m` : `${ex.value}s`) : ex.value}
+                  </p>
+                  <p className="text-[var(--ct2)] text-xs">{ex.label}</p>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
     </div>
   );
 }
