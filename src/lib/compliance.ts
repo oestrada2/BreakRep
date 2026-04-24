@@ -42,7 +42,14 @@ export function getAdjustedReps(
  */
 export function computeDayStats(
   date: string,
-  logs: Array<{ status: string; completedReps?: number | null; completedSquatReps?: number | null; completedSitupReps?: number | null }>
+  logs: Array<{
+    status: string;
+    completedReps?: number | null;
+    completedSquatReps?: number | null;
+    completedSitupReps?: number | null;
+    customExerciseReps?: Record<string, number | null>;
+  }>,
+  customExerciseTrackingTypes?: Record<string, 'reps' | 'time'>
 ): DailyStats {
   const total = logs.length;
   const completed = logs.filter(l => l.status === 'completed').length;
@@ -54,6 +61,17 @@ export function computeDayStats(
   const situpReps = logs.reduce((sum, l) => l.status === 'completed' ? sum + (l.completedSitupReps ?? 0) : sum, 0);
   // plank (situpReps) is measured in seconds — keep it separate, don't add to rep count
   const totalReps = pushupReps + squatReps;
+
+  // Aggregate custom exercise completions per key
+  const customExerciseStats: Record<string, number> = {};
+  if (customExerciseTrackingTypes) {
+    for (const key of Object.keys(customExerciseTrackingTypes)) {
+      customExerciseStats[key] = logs.reduce(
+        (sum, l) => l.status === 'completed' ? sum + (l.customExerciseReps?.[key] ?? 0) : sum,
+        0
+      );
+    }
+  }
 
   return {
     date,
@@ -67,6 +85,7 @@ export function computeDayStats(
     pushupReps,
     squatReps,
     situpReps,
+    customExerciseStats,
   };
 }
 

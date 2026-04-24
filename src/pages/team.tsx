@@ -829,7 +829,15 @@ export default function TeamPage() {
   // Compute this-week and all-time rep counts to publish to the leaderboard
   const weekStart = useMemo(() => offsetISO(-6), []);
   const weekStats = useMemo(() => allStats.filter(s => s.date >= weekStart), [allStats, weekStart]);
-  const weekReps     = useMemo(() => weekStats.reduce((n, s) => n + s.totalReps,  0), [weekStats]);
+  const weekReps = useMemo(() => {
+    const builtinReps = weekStats.reduce((n, s) => n + s.totalReps, 0);
+    const customReps  = weekStats.reduce((n, s) => {
+      return n + Object.entries(s.customExerciseStats ?? {}).reduce((sum, [key, val]) => {
+        return (settings.customExerciseTrackingTypes?.[key] ?? 'reps') === 'reps' ? sum + val : sum;
+      }, 0);
+    }, 0);
+    return builtinReps + customReps;
+  }, [weekStats, settings.customExerciseTrackingTypes]);
   const weekSessions = useMemo(() => weekStats.reduce((n, s) => n + s.completed,  0), [weekStats]);
   const totalReps    = useMemo(() => allStats.reduce((n, s) => n + s.totalReps,   0), [allStats]);
 

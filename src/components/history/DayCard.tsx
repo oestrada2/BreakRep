@@ -8,6 +8,7 @@ interface DayCardProps {
   filterStatus: string;
   enabledExercises?: EnabledExercises;
   customExerciseLabels?: Record<string, string>;
+  customExerciseTrackingTypes?: Record<string, 'reps' | 'time'>;
 }
 
 const STATUS_CONFIG = {
@@ -30,7 +31,7 @@ function formatDateLabel(dateStr: string): string {
   return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 }
 
-export function DayCard({ date, sessions, stats, filterStatus, enabledExercises, customExerciseLabels }: DayCardProps) {
+export function DayCard({ date, sessions, stats, filterStatus, enabledExercises, customExerciseLabels, customExerciseTrackingTypes }: DayCardProps) {
   const pushupLabel = customExerciseLabels?.['pushups'] ?? 'Push-ups';
   const squatLabel  = customExerciseLabels?.['squats']  ?? 'Squats';
   const plankLabel  = customExerciseLabels?.['situps']  ?? 'Plank';
@@ -42,7 +43,13 @@ export function DayCard({ date, sessions, stats, filterStatus, enabledExercises,
   ].filter(ex => !enabledExercises || enabledExercises[ex.key] !== false);
   const customExercises = Object.entries(customExerciseLabels ?? {})
     .filter(([key]) => !enabledExercises || enabledExercises[key] !== false)
-    .map(([key, label]) => ({ key, emoji: '🏋️', label, getCompleted: (_: SessionLog) => null as number | null }));
+    .map(([key, label]) => ({
+      key,
+      emoji: (customExerciseTrackingTypes?.[key] ?? 'reps') === 'time' ? '⏱️' : '🏋️',
+      label,
+      trackingType: (customExerciseTrackingTypes?.[key] ?? 'reps') as 'reps' | 'time',
+      getCompleted: (s: SessionLog) => s.customExerciseReps?.[key] ?? null,
+    }));
   const filtered = filterStatus === 'all'
     ? sessions
     : sessions.filter(s => s.status === filterStatus);
@@ -103,15 +110,18 @@ export function DayCard({ date, sessions, stats, filterStatus, enabledExercises,
                 {[...builtinExercises, ...customExercises]
                   .map(ex => ({ ...ex, completed: ex.getCompleted(s) }))
                   .filter(ex => s.status !== 'completed' || ex.key.startsWith('custom_') || (ex.completed != null && ex.completed > 0))
-                  .map(ex => (
-                    <div key={ex.key} className="flex items-center gap-1.5">
-                      <span className="text-xs">{ex.emoji}</span>
-                      <span className="text-[var(--ct1)] text-xs flex-1">{ex.label}</span>
-                      <span className={`text-xs font-semibold tabular-nums ${s.status === 'completed' ? 'text-[#22C55E]' : 'text-[var(--ct2)]'}`}>
-                        {s.status === 'completed' && ex.completed != null ? ex.completed : s.targetReps} {ex.key === 'situps' ? 'sec' : 'reps'}
-                      </span>
-                    </div>
-                  ))}
+                  .map(ex => {
+                    const isTime = ex.key === 'situps' || ('trackingType' in ex && ex.trackingType === 'time');
+                    return (
+                      <div key={ex.key} className="flex items-center gap-1.5">
+                        <span className="text-xs">{ex.emoji}</span>
+                        <span className="text-[var(--ct1)] text-xs flex-1">{ex.label}</span>
+                        <span className={`text-xs font-semibold tabular-nums ${s.status === 'completed' ? 'text-[#22C55E]' : 'text-[var(--ct2)]'}`}>
+                          {s.status === 'completed' && ex.completed != null ? ex.completed : s.targetReps} {isTime ? 'sec' : 'reps'}
+                        </span>
+                      </div>
+                    );
+                  })}
                 {s.notes && (
                   <p className="text-[var(--ct2)] text-xs truncate pt-0.5">{s.notes}</p>
                 )}

@@ -70,7 +70,8 @@ export interface AppSettings {
   deload: DeloadSettings;
   experienceLevel: ExperienceLevel;
   enabledExercises: EnabledExercises;
-  customExerciseLabels?: Record<string, string>; // key -> display label
+  customExerciseLabels?: Record<string, string>;           // key -> display label
+  customExerciseTrackingTypes?: Record<string, 'reps' | 'time'>; // key -> tracking type
   teams?: Team[];
   /** @deprecated migrated to teams[] */
   teamName?: string;
@@ -92,7 +93,8 @@ export interface SessionLog {
   targetReps: number;
   completedReps: number | null;       // push-up reps
   completedSquatReps: number | null;  // squat reps
-  completedSitupReps: number | null;  // sit-up reps
+  completedSitupReps: number | null;  // sit-up reps (seconds)
+  customExerciseReps?: Record<string, number | null>; // custom_* key -> reps or seconds
   status: SessionStatus;
   snoozedUntil?: string;         // ISO datetime
   notes?: string;
@@ -117,7 +119,8 @@ export interface DailyStats {
   totalReps: number;
   pushupReps: number;
   squatReps: number;
-  situpReps: number;
+  situpReps: number;             // seconds
+  customExerciseStats?: Record<string, number>; // custom_* key -> total reps or seconds
 }
 
 export interface AppState {

@@ -94,7 +94,7 @@ export function useAppState() {
         acc[log.date].push(log);
         return acc;
       }, {})
-  ).map(dayLogs => computeDayStats(dayLogs[0].date, dayLogs));
+  ).map(dayLogs => computeDayStats(dayLogs[0].date, dayLogs, settings.customExerciseTrackingTypes));
 
   const todaySessions = generateDaySessions(today, settings, logs, pastStats);
   const todaySessionsResolved = markPastSessionsMissed(todaySessions);
@@ -116,7 +116,7 @@ export function useAppState() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialized, todaySessionsResolved.map(s => `${s.id}:${s.status}`).join(',')]);
 
-  const todayStats = computeDayStats(today, todaySessionsResolved);
+  const todayStats = computeDayStats(today, todaySessionsResolved, settings.customExerciseTrackingTypes);
 
   // allStats includes today's full session list so compliance is accurate
   const allStats: DailyStats[] = [
@@ -126,7 +126,13 @@ export function useAppState() {
   const streak = calculateStreak(allStats, settings.deload.complianceThreshold);
 
   // ── Mutations ──────────────────────────────────────────────────────────────
-  const completeSession = useCallback((id: string, completedReps: number, completedSquatReps: number, completedSitupReps: number) => {
+  const completeSession = useCallback((
+    id: string,
+    completedReps: number,
+    completedSquatReps: number,
+    completedSitupReps: number,
+    customExerciseReps: Record<string, number> = {},
+  ) => {
     setLogsState(prev => ({
       ...prev,
       [id]: {
@@ -135,6 +141,7 @@ export function useAppState() {
         completedReps,
         completedSquatReps,
         completedSitupReps,
+        customExerciseReps,
         status: 'completed',
         updatedAt: new Date().toISOString(),
       },

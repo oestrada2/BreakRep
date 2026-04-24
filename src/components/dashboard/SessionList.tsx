@@ -4,10 +4,11 @@ import { formatTime } from '@/lib/sessions';
 interface SessionListProps {
   sessions: SessionLog[];
   enabledExercises: EnabledExercises;
+  customExerciseLabels?: Record<string, string>;
   targetReps: number;
   repOverrides?: Record<string, number>;
   excludeId?: string;
-  onComplete: (id: string, pushups: number, squats: number, situps: number) => void;
+  onComplete: (id: string, pushups: number, squats: number, situps: number, customExerciseReps: Record<string, number>) => void;
   onUndo: (id: string) => void;
   onSkip: (id: string) => void;
   onSnooze: (id: string) => void;
@@ -23,7 +24,7 @@ const STATUS_CONFIG = {
 
 const DEFAULT_EXERCISES = { pushups: true, squats: true, situps: true };
 
-export function SessionList({ sessions, enabledExercises, targetReps, repOverrides, excludeId, onComplete, onUndo, onSkip, onSnooze }: SessionListProps) {
+export function SessionList({ sessions, enabledExercises, customExerciseLabels, targetReps, repOverrides, excludeId, onComplete, onUndo, onSkip, onSnooze }: SessionListProps) {
   const enabled = enabledExercises ?? DEFAULT_EXERCISES;
   const visible = sessions.filter(s => s.id !== excludeId).slice(0, 12);
 
@@ -53,12 +54,19 @@ export function SessionList({ sessions, enabledExercises, targetReps, repOverrid
               {canAct ? (
                 <div className="flex items-center gap-1.5">
                   <button
-                    onClick={() => onComplete(
-                      s.id,
-                      enabled.pushups ? (repOverrides?.pushups ?? targetReps) : 0,
-                      enabled.squats  ? (repOverrides?.squats  ?? targetReps) : 0,
-                      enabled.situps  ? Math.max(repOverrides?.situps ?? targetReps, 60) : 0,
-                    )}
+                    onClick={() => {
+                      const customReps: Record<string, number> = {};
+                      Object.keys(customExerciseLabels ?? {}).forEach(key => {
+                        if (enabled[key] !== false) customReps[key] = repOverrides?.[key] ?? targetReps;
+                      });
+                      onComplete(
+                        s.id,
+                        enabled.pushups ? (repOverrides?.pushups ?? targetReps) : 0,
+                        enabled.squats  ? (repOverrides?.squats  ?? targetReps) : 0,
+                        enabled.situps  ? Math.max(repOverrides?.situps ?? targetReps, 60) : 0,
+                        customReps,
+                      );
+                    }}
                     className="px-3 py-1 bg-[#22C55E] text-[#09090B] rounded-lg text-xs font-bold hover:bg-[#16A34A] transition-colors"
                   >Done</button>
                   {canSnooze && (

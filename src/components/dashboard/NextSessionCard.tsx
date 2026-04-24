@@ -6,6 +6,7 @@ interface NextSessionCardProps {
   sessions: SessionLog[];
   enabledExercises: EnabledExercises;
   customExerciseLabels?: Record<string, string>;
+  customExerciseTrackingTypes?: Record<string, 'reps' | 'time'>;
   targetReps: number;
   repOverrides?: Record<string, number>;
   onRepChange?: (key: string, value: number) => void;
@@ -46,13 +47,21 @@ const BUILTIN_EXERCISES = [
 
 const DEFAULT_EXERCISES = { pushups: true, squats: true, situps: true };
 
-export function NextSessionCard({ sessions, enabledExercises, customExerciseLabels, targetReps, repOverrides, onRepChange }: NextSessionCardProps) {
+export function NextSessionCard({ sessions, enabledExercises, customExerciseLabels, customExerciseTrackingTypes, targetReps, repOverrides, onRepChange }: NextSessionCardProps) {
   const enabled = enabledExercises ?? DEFAULT_EXERCISES;
   const allExercises = [
-    ...BUILTIN_EXERCISES.filter(ex => enabled[ex.key]),
+    ...BUILTIN_EXERCISES.filter(ex => enabled[ex.key]).map(ex => ({
+      ...ex,
+      trackingType: ex.key === 'situps' ? 'time' as const : 'reps' as const,
+    })),
     ...Object.entries(customExerciseLabels ?? {})
       .filter(([key]) => enabled[key] !== false)
-      .map(([key, label]) => ({ key, label, emoji: '🏋️' })),
+      .map(([key, label]) => ({
+        key,
+        label,
+        emoji: (customExerciseTrackingTypes?.[key] ?? 'reps') === 'time' ? '⏱️' : '🏋️',
+        trackingType: (customExerciseTrackingTypes?.[key] ?? 'reps') as 'reps' | 'time',
+      })),
   ];
   const [reps, setReps] = useState<Record<string, string>>({});
 
@@ -85,7 +94,8 @@ export function NextSessionCard({ sessions, enabledExercises, customExerciseLabe
 
   function getRepDefault(key: string) {
     const override = repOverrides?.[key];
-    if (key === 'situps') return Math.max(override ?? targetReps, 60);
+    const isTime = key === 'situps' || (customExerciseTrackingTypes?.[key] === 'time');
+    if (isTime) return Math.max(override ?? targetReps, 10);
     return override ?? targetReps;
   }
   function getReps(key: string) {
@@ -160,7 +170,7 @@ export function NextSessionCard({ sessions, enabledExercises, customExerciseLabe
                   className="w-8 h-8 flex items-center justify-center text-[var(--ct2)] hover:text-[var(--ct0)] font-bold transition-colors"
                 >+</button>
               </div>
-              <span className="text-[var(--ct2)] text-xs w-7">{ex.key === 'situps' ? 'sec' : 'reps'}</span>
+              <span className="text-[var(--ct2)] text-xs w-7">{ex.trackingType === 'time' ? 'sec' : 'reps'}</span>
             </div>
           ))}
         </div>

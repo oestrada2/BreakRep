@@ -90,6 +90,7 @@ export default function Today() {
           sessions={todaySessions}
           enabledExercises={enabledExercises}
           customExerciseLabels={settings.customExerciseLabels}
+          customExerciseTrackingTypes={settings.customExerciseTrackingTypes}
           targetReps={todayReps}
           repOverrides={repOverrides}
           onRepChange={(key, val) => setRepOverrides(prev => ({ ...prev, [key]: val }))}
@@ -100,6 +101,7 @@ export default function Today() {
           <SessionList
             sessions={todaySessions}
             enabledExercises={enabledExercises}
+            customExerciseLabels={settings.customExerciseLabels}
             targetReps={todayReps}
             repOverrides={repOverrides}
             onComplete={completeSession}

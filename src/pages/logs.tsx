@@ -41,7 +41,11 @@ export default function Logs() {
 
   const activeCustomExercises = Object.entries(customLabels)
     .filter(([key]) => key.startsWith('custom_') && enabledEx[key] !== false)
-    .map(([, label]) => label);
+    .map(([key, label]) => ({
+      key,
+      label,
+      trackingType: (settings.customExerciseTrackingTypes?.[key] ?? 'reps') as 'reps' | 'time',
+    }));
 
   // ── This week vs last week ─────────────────────────────────────────────────
   const thisWeekStats = useMemo(() =>
@@ -62,6 +66,26 @@ export default function Logs() {
       ? Math.round(thisWeekStats.reduce((n, s) => n + s.complianceRate, 0) / thisWeekStats.length * 100)
       : 0,
   }), [thisWeekStats]);
+
+  const thisWeekCustomStats = useMemo(() => {
+    const result: Record<string, number> = {};
+    thisWeekStats.forEach(s => {
+      Object.entries(s.customExerciseStats ?? {}).forEach(([key, val]) => {
+        result[key] = (result[key] ?? 0) + val;
+      });
+    });
+    return result;
+  }, [thisWeekStats]);
+
+  const allTimeCustomStats = useMemo(() => {
+    const result: Record<string, number> = {};
+    allStats.forEach(s => {
+      Object.entries(s.customExerciseStats ?? {}).forEach(([key, val]) => {
+        result[key] = (result[key] ?? 0) + val;
+      });
+    });
+    return result;
+  }, [allStats]);
 
   const lastWeekReps = useMemo(() =>
     lastWeekStats.reduce((n, s) => n + s.totalReps, 0),
@@ -211,18 +235,21 @@ export default function Logs() {
                 <p className="text-[var(--ct2)] text-xs mt-1.5">{plankLabel} time</p>
               </div>
             )}
-            {activeCustomExercises.length > 0 && (
-              <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 col-span-2">
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {activeCustomExercises.map(label => (
-                    <span key={label} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-[var(--c4)] text-[var(--ct1)] font-semibold">
-                      🏋️ {label}
-                    </span>
-                  ))}
+            {activeCustomExercises.map(({ key, label, trackingType }) => {
+              const total = thisWeekCustomStats[key] ?? 0;
+              const mins  = Math.round(total / 60);
+              return (
+                <div key={key} className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
+                  <p className="text-[#F97316] font-bold text-2xl leading-none">
+                    {trackingType === 'time' ? (mins > 0 ? mins : `${total}s`) : total}
+                  </p>
+                  {trackingType === 'time' && mins > 0 && (
+                    <p className="text-[var(--ct2)] text-[10px] mt-0.5">min</p>
+                  )}
+                  <p className="text-[var(--ct2)] text-xs mt-1.5">{trackingType === 'time' ? '⏱️' : '🏋️'} {label}</p>
                 </div>
-                <p className="text-[var(--ct2)] text-xs">{thisWeek.done} session{thisWeek.done !== 1 ? 's' : ''} completed this week</p>
-              </div>
-            )}
+              );
+            })}
           </div>
         </div>
 
@@ -257,18 +284,21 @@ export default function Logs() {
               }`}>{consistency}%</p>
               <p className="text-[var(--ct2)] text-xs mt-1.5">Consistency</p>
             </div>
-            {activeCustomExercises.length > 0 && (
-              <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 col-span-2">
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {activeCustomExercises.map(label => (
-                    <span key={label} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-[var(--c4)] text-[var(--ct1)] font-semibold">
-                      🏋️ {label}
-                    </span>
-                  ))}
+            {activeCustomExercises.map(({ key, label, trackingType }) => {
+              const total = allTimeCustomStats[key] ?? 0;
+              const mins  = Math.round(total / 60);
+              return (
+                <div key={key} className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
+                  <p className="text-[#22C55E] font-bold text-2xl leading-none">
+                    {trackingType === 'time' ? (mins > 0 ? mins : `${total}s`) : total}
+                  </p>
+                  {trackingType === 'time' && mins > 0 && (
+                    <p className="text-[var(--ct2)] text-[10px] mt-0.5">min</p>
+                  )}
+                  <p className="text-[var(--ct2)] text-xs mt-1.5">{trackingType === 'time' ? '⏱️' : '🏋️'} {label}</p>
                 </div>
-                <p className="text-[var(--ct2)] text-xs">Active custom exercises</p>
-              </div>
-            )}
+              );
+            })}
           </div>
         </div>
 

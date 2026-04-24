@@ -172,6 +172,7 @@ const EXERCISES: { key: string; label: string; emoji: string; desc: string }[] =
 function WorkoutSelectScreen({
   selected,
   customLabels,
+  customTrackingTypes,
   onToggle,
   onAddCustom,
   onRemoveCustom,
@@ -180,21 +181,24 @@ function WorkoutSelectScreen({
 }: {
   selected: EnabledExercises;
   customLabels: Record<string, string>;
+  customTrackingTypes: Record<string, 'reps' | 'time'>;
   onToggle: (key: string) => void;
-  onAddCustom: (label: string) => void;
+  onAddCustom: (label: string, trackingType: 'reps' | 'time') => void;
   onRemoveCustom: (key: string) => void;
   onNext: () => void;
   onBack: () => void;
 }) {
   const [inputValue, setInputValue] = useState('');
+  const [newTrackingType, setNewTrackingType] = useState<'reps' | 'time'>('reps');
   const enabledCount = Object.values(selected).filter(Boolean).length;
   const customKeys = Object.keys(customLabels);
 
   const handleAdd = () => {
     const trimmed = inputValue.trim();
     if (!trimmed) return;
-    onAddCustom(trimmed);
+    onAddCustom(trimmed, newTrackingType);
     setInputValue('');
+    setNewTrackingType('reps');
   };
 
   return (
@@ -254,6 +258,7 @@ function WorkoutSelectScreen({
         {/* Custom exercises */}
         {customKeys.map(key => {
           const isOn = selected[key] ?? true;
+          const trackingType = customTrackingTypes[key] ?? 'reps';
           return (
             <div
               key={key}
@@ -269,11 +274,11 @@ function WorkoutSelectScreen({
                   <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 transition-colors ${
                     isOn ? 'bg-[#FACC15]/10' : 'bg-[var(--c4)]'
                   }`}>
-                    🏋️
+                    {trackingType === 'time' ? '⏱️' : '🏋️'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[var(--ct0)] text-sm font-bold">{customLabels[key]}</p>
-                    <p className="text-[var(--ct2)] text-xs mt-0.5">Custom exercise</p>
+                    <p className="text-[var(--ct2)] text-xs mt-0.5">{trackingType === 'time' ? 'Timed exercise (seconds)' : 'Rep-based exercise'}</p>
                   </div>
                 </button>
                 <div className="flex items-center gap-2 shrink-0">
@@ -311,6 +316,16 @@ function WorkoutSelectScreen({
             placeholder="Add your own exercise…"
             className="flex-1 bg-[var(--c2)] border border-[var(--c5)] rounded-xl px-3 py-2.5 text-sm text-[var(--ct0)] placeholder-[var(--ct2)] focus:outline-none focus:border-[var(--ca)] transition-colors"
           />
+          <div className="flex shrink-0 rounded-xl border border-[var(--c5)] overflow-hidden text-xs font-semibold">
+            <button type="button" onClick={() => setNewTrackingType('reps')}
+              className={`px-2.5 py-2 transition-colors ${newTrackingType === 'reps' ? 'bg-[var(--ca)] text-white' : 'text-[var(--ct2)]'}`}>
+              Reps
+            </button>
+            <button type="button" onClick={() => setNewTrackingType('time')}
+              className={`px-2.5 py-2 transition-colors ${newTrackingType === 'time' ? 'bg-[var(--ca)] text-white' : 'text-[var(--ct2)]'}`}>
+              Time
+            </button>
+          </div>
           <button
             onClick={handleAdd}
             disabled={!inputValue.trim()}
@@ -1344,6 +1359,13 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
     } catch {}
     return {};
   });
+  const [customExerciseTrackingTypes, setCustomExerciseTrackingTypes] = useState<Record<string, 'reps' | 'time'>>(() => {
+    try {
+      const draft = JSON.parse(sessionStorage.getItem('ob_exercise_draft') ?? 'null');
+      if (draft?.customExerciseTrackingTypes) return draft.customExerciseTrackingTypes;
+    } catch {}
+    return {};
+  });
   const [createdTeamName, setCreatedTeamName] = useState('');
   const [createdTeamCode, setCreatedTeamCode] = useState('');
   const [createdTeamOrg,  setCreatedTeamOrg]  = useState('');
@@ -1351,23 +1373,25 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
 
   useEffect(() => {
     try {
-      sessionStorage.setItem('ob_exercise_draft', JSON.stringify({ enabledExercises, customExerciseLabels }));
+      sessionStorage.setItem('ob_exercise_draft', JSON.stringify({ enabledExercises, customExerciseLabels, customExerciseTrackingTypes }));
     } catch {}
-  }, [enabledExercises, customExerciseLabels]);
+  }, [enabledExercises, customExerciseLabels, customExerciseTrackingTypes]);
 
   const toggleExercise = (key: string) => {
     setEnabledExercises(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const addCustomExercise = (label: string) => {
+  const addCustomExercise = (label: string, trackingType: 'reps' | 'time' = 'reps') => {
     const key = `custom_${Date.now()}`;
     setCustomExerciseLabels(prev => ({ ...prev, [key]: label }));
     setEnabledExercises(prev => ({ ...prev, [key]: true }));
+    setCustomExerciseTrackingTypes(prev => ({ ...prev, [key]: trackingType }));
   };
 
   const removeCustomExercise = (key: string) => {
     setCustomExerciseLabels(prev => { const next = { ...prev }; delete next[key]; return next; });
     setEnabledExercises(prev => { const next = { ...prev }; delete next[key]; return next; });
+    setCustomExerciseTrackingTypes(prev => { const next = { ...prev }; delete next[key]; return next; });
   };
 
   const finish = async (profileName = '', firstName = '', lastName = '') => {
@@ -1430,6 +1454,7 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
       experienceLevel: fitnessLevel,
       enabledExercises,
       customExerciseLabels,
+      customExerciseTrackingTypes,
       teams,
       reminders: {
         scheduleMode: 'auto',
@@ -1452,6 +1477,7 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
       <WorkoutSelectScreen
         selected={enabledExercises}
         customLabels={customExerciseLabels}
+        customTrackingTypes={customExerciseTrackingTypes}
         onToggle={toggleExercise}
         onAddCustom={addCustomExercise}
         onRemoveCustom={removeCustomExercise}

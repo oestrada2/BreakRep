@@ -178,6 +178,7 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification }
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [customExInput, setCustomExInput] = useState('');
+  const [customExTrackingType, setCustomExTrackingType] = useState<'reps' | 'time'>('reps');
 
   useEffect(() => {
     const saved = loadProfile();
@@ -398,6 +399,7 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification }
               const enabledEx = settings.enabledExercises ?? { pushups: true, squats: true, situps: true };
               const enabledCount = Object.values(enabledEx).filter(Boolean).length;
               const enabled = enabledEx[key] ?? true;
+              const trackingType = settings.customExerciseTrackingTypes?.[key] ?? 'reps';
               return (
                 <div
                   key={key}
@@ -412,10 +414,23 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification }
                     }}
                     className="flex items-center gap-3 flex-1 min-w-0 text-left"
                   >
-                    <span className="text-lg">🏋️</span>
+                    <span className="text-lg">{trackingType === 'time' ? '⏱️' : '🏋️'}</span>
                     <span className="flex-1 text-sm text-[var(--ct0)] truncate">{label}</span>
                   </button>
                   <div className="flex items-center gap-2 shrink-0">
+                    {/* Reps / Time toggle */}
+                    <div className="flex rounded-lg border border-[var(--c5)] overflow-hidden text-[10px] font-semibold">
+                      <button type="button"
+                        onClick={() => onChange({ customExerciseTrackingTypes: { ...(settings.customExerciseTrackingTypes ?? {}), [key]: 'reps' } })}
+                        className={`px-2 py-1 transition-colors ${trackingType === 'reps' ? 'bg-[var(--ca)] text-white' : 'text-[var(--ct2)]'}`}>
+                        Reps
+                      </button>
+                      <button type="button"
+                        onClick={() => onChange({ customExerciseTrackingTypes: { ...(settings.customExerciseTrackingTypes ?? {}), [key]: 'time' } })}
+                        className={`px-2 py-1 transition-colors ${trackingType === 'time' ? 'bg-[var(--ca)] text-white' : 'text-[var(--ct2)]'}`}>
+                        Time
+                      </button>
+                    </div>
                     <div
                       onClick={() => {
                         if (enabled && enabledCount === 1) return;
@@ -437,7 +452,9 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification }
                         delete nextLabels[key];
                         const nextEnabled = { ...enabledEx };
                         delete nextEnabled[key];
-                        onChange({ customExerciseLabels: nextLabels, enabledExercises: nextEnabled });
+                        const nextTypes = { ...(settings.customExerciseTrackingTypes ?? {}) };
+                        delete nextTypes[key];
+                        onChange({ customExerciseLabels: nextLabels, enabledExercises: nextEnabled, customExerciseTrackingTypes: nextTypes });
                       }}
                       className="w-5 h-5 flex items-center justify-center text-[var(--ct2)] hover:text-red-400 transition-colors"
                     >
@@ -460,13 +477,25 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification }
                     onChange({
                       customExerciseLabels: { ...(settings.customExerciseLabels ?? {}), [key]: customExInput.trim() },
                       enabledExercises: { ...(settings.enabledExercises ?? { pushups: true, squats: true, situps: true }), [key]: true },
+                      customExerciseTrackingTypes: { ...(settings.customExerciseTrackingTypes ?? {}), [key]: customExTrackingType },
                     });
                     setCustomExInput('');
+                    setCustomExTrackingType('reps');
                   }
                 }}
                 placeholder="Add your own exercise…"
                 className="flex-1 bg-[var(--c2)] border border-[var(--c5)] rounded-xl px-3 py-2 text-sm text-[var(--ct0)] placeholder-[var(--ct2)] focus:outline-none focus:border-[var(--ca)] transition-colors"
               />
+              <div className="flex shrink-0 rounded-xl border border-[var(--c5)] overflow-hidden text-xs font-semibold">
+                <button type="button" onClick={() => setCustomExTrackingType('reps')}
+                  className={`px-2.5 py-2 transition-colors ${customExTrackingType === 'reps' ? 'bg-[var(--ca)] text-white' : 'text-[var(--ct2)]'}`}>
+                  Reps
+                </button>
+                <button type="button" onClick={() => setCustomExTrackingType('time')}
+                  className={`px-2.5 py-2 transition-colors ${customExTrackingType === 'time' ? 'bg-[var(--ca)] text-white' : 'text-[var(--ct2)]'}`}>
+                  Time
+                </button>
+              </div>
               <button
                 onClick={() => {
                   if (!customExInput.trim()) return;
@@ -474,8 +503,10 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification }
                   onChange({
                     customExerciseLabels: { ...(settings.customExerciseLabels ?? {}), [key]: customExInput.trim() },
                     enabledExercises: { ...(settings.enabledExercises ?? { pushups: true, squats: true, situps: true }), [key]: true },
+                    customExerciseTrackingTypes: { ...(settings.customExerciseTrackingTypes ?? {}), [key]: customExTrackingType },
                   });
                   setCustomExInput('');
+                  setCustomExTrackingType('reps');
                 }}
                 disabled={!customExInput.trim()}
                 className="w-9 h-9 shrink-0 rounded-xl bg-[var(--ca)] flex items-center justify-center transition-opacity disabled:opacity-30"
