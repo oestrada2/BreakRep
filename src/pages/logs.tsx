@@ -17,7 +17,7 @@ export default function Logs() {
 
   const todayISO     = toLocalISO(new Date());
   const yesterdayISO = offsetISO(-1);
-  const [selectedDate, setSelectedDate] = useState<string>(yesterdayISO);
+  const [selectedDate, setSelectedDate] = useState<string>(todayISO);
   const [view, setView] = useState<'week' | 'calendar'>('week');
 
   const statsMap = useMemo(() => {
