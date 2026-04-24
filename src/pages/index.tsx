@@ -40,7 +40,17 @@ export default function Today() {
   if (!settings.onboardingComplete) {
     return (
       <OnboardingWizard
-        onComplete={partial => updateSettings(partial as Partial<AppSettings>)}
+        onComplete={partial => {
+          try {
+            const snap = sessionStorage.getItem('ob_dev_snapshot');
+            if (snap) {
+              sessionStorage.removeItem('ob_dev_snapshot');
+              updateSettings({ ...JSON.parse(snap), onboardingComplete: true });
+              return;
+            }
+          } catch {}
+          updateSettings(partial as Partial<AppSettings>);
+        }}
         isReturningUser={hasExistingData()}
       />
     );

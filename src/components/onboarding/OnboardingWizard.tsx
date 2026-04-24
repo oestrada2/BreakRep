@@ -1327,18 +1327,33 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
       }
     }
   }, [status]);
+
   const [fitnessLevel, setFitnessLevel] = useState<ExperienceLevel>('beginner');
   const [assessReps, setAssessReps] = useState(0);
-  const [enabledExercises, setEnabledExercises] = useState<EnabledExercises>({
-    pushups: true,
-    squats:  true,
-    situps:  true,
+  const [enabledExercises, setEnabledExercises] = useState<EnabledExercises>(() => {
+    try {
+      const draft = JSON.parse(sessionStorage.getItem('ob_exercise_draft') ?? 'null');
+      if (draft?.enabledExercises) return draft.enabledExercises;
+    } catch {}
+    return { pushups: true, squats: true, situps: true };
   });
-  const [customExerciseLabels, setCustomExerciseLabels] = useState<Record<string, string>>({});
+  const [customExerciseLabels, setCustomExerciseLabels] = useState<Record<string, string>>(() => {
+    try {
+      const draft = JSON.parse(sessionStorage.getItem('ob_exercise_draft') ?? 'null');
+      if (draft?.customExerciseLabels) return draft.customExerciseLabels;
+    } catch {}
+    return {};
+  });
   const [createdTeamName, setCreatedTeamName] = useState('');
   const [createdTeamCode, setCreatedTeamCode] = useState('');
   const [createdTeamOrg,  setCreatedTeamOrg]  = useState('');
   const [joinedTeam,      setJoinedTeam]      = useState<Team | null>(null);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('ob_exercise_draft', JSON.stringify({ enabledExercises, customExerciseLabels }));
+    } catch {}
+  }, [enabledExercises, customExerciseLabels]);
 
   const toggleExercise = (key: string) => {
     setEnabledExercises(prev => ({ ...prev, [key]: !prev[key] }));
@@ -1356,6 +1371,7 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
   };
 
   const finish = async (profileName = '', firstName = '', lastName = '') => {
+    try { sessionStorage.removeItem('ob_exercise_draft'); } catch {}
     const teamId = createdTeamName && createdTeamCode ? 'team-' + Date.now() : '';
     const adminName = `${firstName} ${lastName}`.trim() || profileName || 'Admin';
 
