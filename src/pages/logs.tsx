@@ -34,10 +34,8 @@ export default function Logs() {
   const plankLabel   = customLabels['situps']  ?? 'Plank';
   const plankEnabled = enabledEx['situps'] !== false;
 
-  const repsBoxLabel = [
-    enabledEx['pushups'] !== false ? pushupLabel : null,
-    enabledEx['squats']  !== false ? squatLabel  : null,
-  ].filter(Boolean).join(' & ') + ' reps';
+  const pushupEnabled = enabledEx['pushups'] !== false;
+  const squatEnabled  = enabledEx['squats']  !== false;
 
   const activeCustomExercises = Object.entries(customLabels)
     .filter(([key]) => key.startsWith('custom_') && enabledEx[key] !== false)
@@ -87,14 +85,15 @@ export default function Logs() {
     return result;
   }, [allStats]);
 
-  const lastWeekReps = useMemo(() =>
-    lastWeekStats.reduce((n, s) => n + s.totalReps, 0),
+  const lastWeekPushupReps = useMemo(() =>
+    lastWeekStats.reduce((n, s) => n + s.pushupReps, 0),
   [lastWeekStats]);
 
-  const repDiff = thisWeek.reps - lastWeekReps;
+  const lastWeekSquatReps = useMemo(() =>
+    lastWeekStats.reduce((n, s) => n + s.squatReps, 0),
+  [lastWeekStats]);
 
   // ── All-time ───────────────────────────────────────────────────────────────
-  const totalReps         = useMemo(() => allStats.reduce((n, s) => n + s.totalReps, 0),   [allStats]);
   const allTimePushupReps = useMemo(() => allStats.reduce((n, s) => n + s.pushupReps, 0),  [allStats]);
   const allTimeSquatReps  = useMemo(() => allStats.reduce((n, s) => n + s.squatReps, 0),   [allStats]);
   const allTimeSitupReps  = useMemo(() => allStats.reduce((n, s) => n + s.situpReps, 0),   [allStats]);
@@ -213,15 +212,28 @@ export default function Logs() {
               }`}>{thisWeek.rate}%</p>
               <p className="text-[var(--ct2)] text-xs mt-1.5">Completion</p>
             </div>
-            <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
-              <p className="text-[#F97316] font-bold text-2xl leading-none">{thisWeek.reps}</p>
-              {lastWeekReps > 0 && (
-                <p className={`text-[10px] font-semibold mt-0.5 ${repDiff >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
-                  {repDiff >= 0 ? '↑' : '↓'} {Math.abs(repDiff)} vs last week
-                </p>
-              )}
-              <p className="text-[var(--ct2)] text-xs mt-1.5">{repsBoxLabel}</p>
-            </div>
+            {pushupEnabled && (
+              <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
+                <p className="text-[#F97316] font-bold text-2xl leading-none">{thisWeek.pushupReps}</p>
+                {lastWeekPushupReps > 0 && (() => { const d = thisWeek.pushupReps - lastWeekPushupReps; return (
+                  <p className={`text-[10px] font-semibold mt-0.5 ${d >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+                    {d >= 0 ? '↑' : '↓'} {Math.abs(d)} vs last week
+                  </p>
+                ); })()}
+                <p className="text-[var(--ct2)] text-xs mt-1.5">💪 {pushupLabel} reps</p>
+              </div>
+            )}
+            {squatEnabled && (
+              <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
+                <p className="text-[#F97316] font-bold text-2xl leading-none">{thisWeek.squatReps}</p>
+                {lastWeekSquatReps > 0 && (() => { const d = thisWeek.squatReps - lastWeekSquatReps; return (
+                  <p className={`text-[10px] font-semibold mt-0.5 ${d >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+                    {d >= 0 ? '↑' : '↓'} {Math.abs(d)} vs last week
+                  </p>
+                ); })()}
+                <p className="text-[var(--ct2)] text-xs mt-1.5">🦵 {squatLabel} reps</p>
+              </div>
+            )}
             {plankEnabled && thisWeek.situpReps > 0 && (
               <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
                 <p className="text-[#A78BFA] font-bold text-2xl leading-none">
@@ -257,10 +269,18 @@ export default function Logs() {
         <div>
           <p className="text-[var(--ct2)] text-[10px] font-bold uppercase tracking-widest mb-2">All time</p>
           <div className="grid grid-cols-2 gap-2">
-            <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
-              <p className="text-[#22C55E] font-bold text-2xl leading-none">{totalReps}</p>
-              <p className="text-[var(--ct2)] text-xs mt-1.5">{repsBoxLabel}</p>
-            </div>
+            {pushupEnabled && (
+              <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
+                <p className="text-[#22C55E] font-bold text-2xl leading-none">{allTimePushupReps}</p>
+                <p className="text-[var(--ct2)] text-xs mt-1.5">💪 {pushupLabel} reps</p>
+              </div>
+            )}
+            {squatEnabled && (
+              <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
+                <p className="text-[#22C55E] font-bold text-2xl leading-none">{allTimeSquatReps}</p>
+                <p className="text-[var(--ct2)] text-xs mt-1.5">🦵 {squatLabel} reps</p>
+              </div>
+            )}
             {plankEnabled && allTimeSitupReps > 0 && (
               <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
                 <p className="text-[#A78BFA] font-bold text-2xl leading-none">
