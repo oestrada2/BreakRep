@@ -95,7 +95,7 @@ export default function Logs() {
             <p className="text-[var(--ct2)] text-xs mt-0.5">Your stats and progress</p>
           </div>
           <div className="flex bg-[var(--c2)] border border-[var(--c5)] rounded-xl p-0.5 gap-0.5">
-            {([['week', 'Week'], ['calendar', 'Cal']] as const).map(([v, label]) => (
+            {([['week', 'Week'], ['calendar', 'Calendar']] as const).map(([v, label]) => (
               <button key={v} onClick={() => setView(v)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   view === v ? 'bg-[#FACC15] text-[#0B1C2D]' : 'text-[var(--ct2)] hover:text-[var(--ct1)]'
