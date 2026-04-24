@@ -1147,6 +1147,7 @@ function ProfileScreen({ onFinish, onBack, onTeamCreated, onTeamJoined }: {
   const [showJoinSheet, setShowJoinSheet] = useState(false);
   const [createdTeam, setCreatedTeam] = useState<{ name: string; code: string } | null>(null);
   const [joinedTeam,  setJoinedTeam]  = useState<Team | null>(null);
+  const [touched, setTouched] = useState(false);
 
   // Auto-populate display name from first + last
   const handleFirstName = (v: string) => {
@@ -1157,6 +1158,8 @@ function ProfileScreen({ onFinish, onBack, onTeamCreated, onTeamJoined }: {
     setLastName(v);
     setName(`${firstName} ${v}`.trim());
   };
+
+  const canProceed = firstName.trim().length > 0 && name.trim().length > 0;
 
   return (
     <>
@@ -1183,7 +1186,7 @@ function ProfileScreen({ onFinish, onBack, onTeamCreated, onTeamJoined }: {
             <label className="block">
               <span className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide">First name</span>
               <input type="text" placeholder="First" value={firstName} onChange={e => handleFirstName(e.target.value)}
-                className="mt-1.5 w-full bg-[var(--c4)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#FACC15] outline-none text-sm transition-colors" />
+                className={`mt-1.5 w-full bg-[var(--c4)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border outline-none text-sm transition-colors focus:border-[#FACC15] ${touched && !firstName.trim() ? 'border-[#EF4444]' : 'border-[var(--c5)]'}`} />
             </label>
             <label className="block">
               <span className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide">Last name</span>
@@ -1195,7 +1198,7 @@ function ProfileScreen({ onFinish, onBack, onTeamCreated, onTeamJoined }: {
             <span className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide">Display name</span>
             <p className="text-[var(--ct2)] text-xs mt-0.5 mb-1.5">This is how you'll appear to teammates — feel free to use a nickname or whatever fits you best.</p>
             <input type="text" placeholder="How you appear to teammates" value={name} onChange={e => setName(e.target.value)}
-              className="w-full bg-[var(--c4)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border border-[var(--c5)] focus:border-[#FACC15] outline-none text-sm transition-colors" />
+              className={`w-full bg-[var(--c4)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border outline-none text-sm transition-colors focus:border-[#FACC15] ${touched && !name.trim() ? 'border-[#EF4444]' : 'border-[var(--c5)]'}`} />
           </label>
         </div>
 
@@ -1278,7 +1281,13 @@ function ProfileScreen({ onFinish, onBack, onTeamCreated, onTeamJoined }: {
           )}
         </div>
 
-        <Button variant="primary" size="lg" className="w-full" onClick={() => onFinish(name, firstName, lastName)}>Let's go →</Button>
+        {touched && !canProceed && (
+          <p className="text-[#EF4444] text-xs text-center -mt-1">Please enter your first name and display name to continue.</p>
+        )}
+        <Button variant="primary" size="lg" className="w-full" onClick={() => {
+          setTouched(true);
+          if (canProceed) onFinish(name, firstName, lastName);
+        }}>Let's go →</Button>
         <StepDots total={7} current={6} />
       </Screen>
 
