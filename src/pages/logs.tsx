@@ -39,6 +39,10 @@ export default function Logs() {
     enabledEx['squats']  !== false ? squatLabel  : null,
   ].filter(Boolean).join(' & ') + ' reps';
 
+  const activeCustomExercises = Object.entries(customLabels)
+    .filter(([key]) => key.startsWith('custom_') && enabledEx[key] !== false)
+    .map(([, label]) => label);
+
   // ── This week vs last week ─────────────────────────────────────────────────
   const thisWeekStats = useMemo(() =>
     allStats.filter(s => s.date >= offsetISO(-6)),
@@ -207,6 +211,18 @@ export default function Logs() {
                 <p className="text-[var(--ct2)] text-xs mt-1.5">{plankLabel} time</p>
               </div>
             )}
+            {activeCustomExercises.length > 0 && (
+              <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 col-span-2">
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {activeCustomExercises.map(label => (
+                    <span key={label} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-[var(--c4)] text-[var(--ct1)] font-semibold">
+                      🏋️ {label}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-[var(--ct2)] text-xs">{thisWeek.done} session{thisWeek.done !== 1 ? 's' : ''} completed this week</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -241,6 +257,18 @@ export default function Logs() {
               }`}>{consistency}%</p>
               <p className="text-[var(--ct2)] text-xs mt-1.5">Consistency</p>
             </div>
+            {activeCustomExercises.length > 0 && (
+              <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 col-span-2">
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {activeCustomExercises.map(label => (
+                    <span key={label} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-[var(--c4)] text-[var(--ct1)] font-semibold">
+                      🏋️ {label}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-[var(--ct2)] text-xs">Active custom exercises</p>
+              </div>
+            )}
           </div>
         </div>
 
