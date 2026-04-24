@@ -14,6 +14,14 @@ function generateTeamCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
+function getEmail(sessionEmail: string | null | undefined): string {
+  if (sessionEmail) return sessionEmail;
+  try {
+    const p = JSON.parse(localStorage.getItem('puh_profile') ?? '{}');
+    return p.email ?? '';
+  } catch { return ''; }
+}
+
 function offsetISO(days: number) {
   const d = new Date(Date.now() + days * 86_400_000);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -157,7 +165,7 @@ function JoinTeamSheet({ onClose, onJoined }: { onClose: () => void; onJoined: (
     if (!teamCode || teamCode.length < 4) { setError('Please select a team or enter a valid code.'); return; }
 
     // Update profile with the team they're joining
-    const email = session?.user?.email ?? '';
+    const email = getEmail(session?.user?.email);
     if (email) {
       await supabase.from('profiles').upsert({
         email,
@@ -296,7 +304,7 @@ function CreateTeamSheet({ onClose, onCreated }: { onClose: () => void; onCreate
 
   // Pre-fill org from email domain, skipping consumer providers
   useEffect(() => {
-    const email = session?.user?.email ?? '';
+    const email = getEmail(session?.user?.email);
     if (!email) return;
     const domain = email.split('@')[1]?.split('.')[0]?.toLowerCase() ?? '';
     const consumerProviders = new Set(['gmail', 'yahoo', 'hotmail', 'outlook', 'icloud', 'protonmail', 'aol', 'live', 'msn', 'me', 'mail', 'ymail', 'googlemail']);
@@ -346,7 +354,7 @@ function CreateTeamSheet({ onClose, onCreated }: { onClose: () => void; onCreate
     });
 
     // Update the user's profile row with their team and org
-    const email = session?.user?.email ?? '';
+    const email = getEmail(session?.user?.email);
     if (email) {
       await supabase.from('profiles').upsert({
         email,
@@ -827,7 +835,7 @@ export default function TeamPage() {
 
   // Upsert current user's stats for every team they belong to
   useEffect(() => {
-    const email = session?.user?.email;
+    const email = getEmail(session?.user?.email) || undefined;
     if (!email || teams.length === 0) return;
     const displayName = (() => {
       try {

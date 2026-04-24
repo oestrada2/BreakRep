@@ -5,6 +5,14 @@ import { Button } from '@/components/ui/Button';
 import { NotificationService } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
 
+function getEmail(sessionEmail: string | null | undefined): string {
+  if (sessionEmail) return sessionEmail;
+  try {
+    const p = JSON.parse(localStorage.getItem('puh_profile') ?? '{}');
+    return p.email ?? '';
+  } catch { return ''; }
+}
+
 const PRESETS: Record<ExperienceLevel, Partial<AppSettings['progression']>> = {
   beginner:     { startingReps: 5,  increaseAmount: 2, increaseEveryDays: 3, maxReps: 30 },
   intermediate: { startingReps: 10, increaseAmount: 3, increaseEveryDays: 3, maxReps: 50 },
@@ -691,7 +699,15 @@ function SignInScreen({ onNext, onBack }: { onNext: () => void; onBack: () => vo
           </div>
         </div>
         <button
-          onClick={() => { if (canSubmit) onNext(); }}
+          onClick={() => {
+            if (!canSubmit) return;
+            // Persist email so it's available as a fallback when no OAuth session exists
+            try {
+              const existing = JSON.parse(localStorage.getItem('puh_profile') ?? '{}');
+              localStorage.setItem('puh_profile', JSON.stringify({ ...existing, email, displayName: name.trim() }));
+            } catch {}
+            onNext();
+          }}
           disabled={!canSubmit}
           className="w-full flex items-center justify-center gap-2 bg-[var(--accent)] rounded-xl py-3.5 text-sm text-white font-semibold transition-opacity disabled:opacity-40"
         >
@@ -769,7 +785,7 @@ function TeamSheet({ onClose, onTeamCreated }: { onClose: () => void; onTeamCrea
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    const email = session?.user?.email ?? '';
+    const email = getEmail(session?.user?.email);
     if (!email) return;
     const domain = email.split('@')[1]?.split('.')[0]?.toLowerCase() ?? '';
     const consumerProviders = new Set(['gmail', 'yahoo', 'hotmail', 'outlook', 'icloud', 'protonmail', 'aol', 'live', 'msn', 'me', 'mail', 'ymail', 'googlemail']);
@@ -1006,7 +1022,7 @@ function JoinTeamSheet({ onClose, onJoined }: { onClose: () => void; onJoined?: 
       return;
     }
 
-    const email = session?.user?.email ?? '';
+    const email = getEmail(session?.user?.email);
 
     // Insert join request so admin is notified in real time
     await supabase.from('team_requests').insert({
@@ -1362,7 +1378,7 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
     } catch {}
 
     // Persist profile to Supabase
-    const email = session?.user?.email ?? '';
+    const email = getEmail(session?.user?.email);
     if (email) {
       await supabase.from('profiles').upsert({
         email,
