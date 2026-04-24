@@ -1,6 +1,9 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useAppState } from '@/hooks/useAppState';
 import { NavTabs } from '@/components/layout/NavTabs';
+import { WeekStrip } from '@/components/history/WeekStrip';
+import { CalendarView } from '@/components/history/CalendarView';
+import { DayCard } from '@/components/history/DayCard';
 
 function toLocalISO(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -11,9 +14,37 @@ function offsetISO(days: number) {
 }
 
 export default function Logs() {
-  const { logs, allStats, streak, settings } = useAppState();
+  const { logs, allStats, streak, todaySessions, settings } = useAppState();
 
-  const todayISO = toLocalISO(new Date());
+  const todayISO     = toLocalISO(new Date());
+  const yesterdayISO = offsetISO(-1);
+  const [selectedDate, setSelectedDate] = useState<string>(yesterdayISO);
+  const [view, setView] = useState<'week' | 'calendar'>('week');
+
+  // ── Session map (past days only) ──────────────────────────────────────────
+  const byDate = useMemo(() => {
+    const map: Record<string, typeof todaySessions> = {};
+    Object.values(logs).forEach(s => {
+      if (s.date === todayISO) return;
+      if (!map[s.date]) map[s.date] = [];
+      map[s.date].push(s);
+    });
+    const overnight   = settings.reminders.endHour < settings.reminders.startHour;
+    const windowStart = settings.reminders.startHour;
+    const adjustHour  = (h: number) => overnight && h < windowStart ? h + 24 : h;
+    Object.values(map).forEach(arr => arr.sort((a, b) => {
+      const ah = adjustHour(a.scheduledHour) * 60 + (a.scheduledMinute ?? 0);
+      const bh = adjustHour(b.scheduledHour) * 60 + (b.scheduledMinute ?? 0);
+      return ah - bh;
+    }));
+    return map;
+  }, [logs, todayISO, settings.reminders]);
+
+  const statsMap = useMemo(() => {
+    const m: Record<string, typeof allStats[0]> = {};
+    allStats.forEach(s => { m[s.date] = s; });
+    return m;
+  }, [allStats]);
 
   // ── This week vs last week ─────────────────────────────────────────────────
   const thisWeekStats = useMemo(() =>
@@ -42,10 +73,10 @@ export default function Logs() {
   const repDiff = thisWeek.reps - lastWeekReps;
 
   // ── All-time ───────────────────────────────────────────────────────────────
-  const totalReps        = useMemo(() => allStats.reduce((n, s) => n + s.totalReps, 0),   [allStats]);
-  const allTimePushupReps = useMemo(() => allStats.reduce((n, s) => n + s.pushupReps, 0), [allStats]);
-  const allTimeSquatReps  = useMemo(() => allStats.reduce((n, s) => n + s.squatReps, 0),  [allStats]);
-  const allTimeSitupReps  = useMemo(() => allStats.reduce((n, s) => n + s.situpReps, 0),  [allStats]);
+  const totalReps         = useMemo(() => allStats.reduce((n, s) => n + s.totalReps, 0),   [allStats]);
+  const allTimePushupReps = useMemo(() => allStats.reduce((n, s) => n + s.pushupReps, 0),  [allStats]);
+  const allTimeSquatReps  = useMemo(() => allStats.reduce((n, s) => n + s.squatReps, 0),   [allStats]);
+  const allTimeSitupReps  = useMemo(() => allStats.reduce((n, s) => n + s.situpReps, 0),   [allStats]);
 
   const personalBest = useMemo(() =>
     Math.max(0, ...Object.values(logs).map(s => s.completedReps ?? 0)),
@@ -59,11 +90,6 @@ export default function Logs() {
 
   // ── Weekly streak dots (Mon–Sun) ───────────────────────────────────────────
   const threshold = settings.deload.complianceThreshold;
-  const statsMap = useMemo(() => {
-    const m: Record<string, typeof allStats[0]> = {};
-    allStats.forEach(s => { m[s.date] = s; });
-    return m;
-  }, [allStats]);
 
   const streakDots = useMemo(() => {
     const dow = new Date().getDay();
@@ -82,14 +108,56 @@ export default function Logs() {
   return (
     <div className="min-h-screen bg-[var(--c0)] text-[var(--ct0)] font-sans pb-20">
       {/* ── Header ── */}
-      <header className="sticky top-0 z-50 bg-[var(--c0)]/95 backdrop-blur border-b border-[var(--c2)] px-4 pt-4 pb-3">
-        <h1 className="text-[var(--ct0)] text-xl font-bold">History</h1>
-        <p className="text-[var(--ct2)] text-xs mt-0.5">Your stats and progress</p>
+      <header className="sticky top-0 z-50 bg-[var(--c0)]/95 backdrop-blur border-b border-[var(--c2)] px-4 pt-4 pb-3 space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-[var(--ct0)] text-xl font-bold">History</h1>
+            <p className="text-[var(--ct2)] text-xs mt-0.5">Your stats and progress</p>
+          </div>
+          <div className="flex bg-[var(--c2)] border border-[var(--c5)] rounded-xl p-0.5 gap-0.5">
+            {([['week', 'Week'], ['calendar', 'Cal']] as const).map(([v, label]) => (
+              <button key={v} onClick={() => setView(v)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  view === v ? 'bg-[#FACC15] text-[#0B1C2D]' : 'text-[var(--ct2)] hover:text-[var(--ct1)]'
+                }`}>{label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {view === 'week' && (
+          <WeekStrip selectedDate={selectedDate} statsMap={statsMap} onSelect={setSelectedDate} />
+        )}
       </header>
 
       <main className="max-w-lg mx-auto px-4 pt-5 space-y-5">
 
-        {/* ── 1. Streak hero ── */}
+        {/* ── Calendar or Day view ── */}
+        {view === 'calendar' ? (
+          <CalendarView
+            statsMap={statsMap}
+            selectedDate={selectedDate}
+            onSelect={date => { setSelectedDate(date); setView('week'); }}
+          />
+        ) : (
+          byDate[selectedDate] ? (
+            <DayCard
+              date={selectedDate}
+              sessions={byDate[selectedDate]}
+              stats={statsMap[selectedDate] ?? null}
+              filterStatus="all"
+              enabledExercises={settings.enabledExercises}
+              customExerciseLabels={settings.customExerciseLabels}
+            />
+          ) : (
+            <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-8 text-center">
+              <p className="text-3xl mb-2">📭</p>
+              <p className="text-[var(--ct0)] text-sm font-semibold">No sessions logged</p>
+              <p className="text-[var(--ct2)] text-xs mt-1">No data for this day yet.</p>
+            </div>
+          )
+        )}
+
+        {/* ── Streak hero ── */}
         <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -102,7 +170,6 @@ export default function Logs() {
                 <p className="text-[var(--ct2)] text-xs mt-1">Current streak</p>
               </div>
             </div>
-            {/* Weekly dot strip */}
             <div className="flex flex-col items-end gap-1.5">
               <p className="text-[var(--ct2)] text-[10px] uppercase tracking-widest">This week</p>
               <div className="flex gap-1">
@@ -128,7 +195,7 @@ export default function Logs() {
           )}
         </div>
 
-        {/* ── 2. This week ── */}
+        {/* ── This week ── */}
         <div>
           <p className="text-[var(--ct2)] text-[10px] font-bold uppercase tracking-widest mb-2">This week</p>
           <div className="grid grid-cols-3 gap-2">
@@ -163,7 +230,7 @@ export default function Logs() {
           </div>
         </div>
 
-        {/* ── 3. All time ── */}
+        {/* ── All time ── */}
         <div>
           <p className="text-[var(--ct2)] text-[10px] font-bold uppercase tracking-widest mb-2">All time</p>
           <div className="grid grid-cols-3 gap-2">
