@@ -12,14 +12,8 @@ export function DayProgress({ stats, targetReps }: DayProgressProps) {
 
   const remaining = stats.totalSessions - stats.completed - stats.missed - stats.skipped;
 
-  const barGradient = pct >= 60
-    ? { background: 'linear-gradient(90deg, #16A34A, #22C55E, #4ADE80)', boxShadow: '0 0 10px rgba(34,197,94,0.5)' }
-    : pct >= 30
-    ? { background: 'linear-gradient(90deg, #CA8A04, #FACC15)', boxShadow: '0 0 10px rgba(250,204,21,0.4)' }
-    : { background: 'linear-gradient(90deg, #B91C1C, #EF4444)', boxShadow: '0 0 10px rgba(239,68,68,0.4)' };
-
   return (
-    <div className="bg-gradient-to-br from-[var(--c3)] via-[var(--c2)] to-[var(--c0)] border border-[var(--c5)]/60 rounded-2xl p-4">
+    <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-4">
       <div className="flex items-center justify-between mb-3">
         <p className="text-[var(--ct0)] text-sm font-semibold">Today's Progress</p>
         <span className={`text-sm font-bold ${pct >= 60 ? 'text-[#22C55E]' : pct >= 30 ? 'text-[#F97316]' : 'text-[#EF4444]'}`}>
@@ -31,14 +25,21 @@ export function DayProgress({ stats, targetReps }: DayProgressProps) {
       <div className="w-full bg-[var(--c4)] rounded-full h-2.5 mb-3 overflow-hidden">
         <div
           className="h-2.5 rounded-full transition-all duration-700"
-          style={{ width: `${pct}%`, ...(pct > 0 ? barGradient : {}) }}
+          style={{
+            width: `${pct}%`,
+            background: pct >= 60
+              ? 'linear-gradient(90deg, #16A34A, #22C55E)'
+              : pct >= 30
+              ? 'linear-gradient(90deg, #CA8A04, #FACC15)'
+              : 'linear-gradient(90deg, #B91C1C, #EF4444)',
+          }}
         />
       </div>
 
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-2">
         <div className="text-center">
-          <p className="bg-gradient-to-r from-[#22C55E] to-[#4ADE80] bg-clip-text text-transparent text-base font-bold">{stats.completed}</p>
+          <p className="text-[#22C55E] text-base font-bold">{stats.completed}</p>
           <p className="text-[var(--ct2)] text-xs">Done</p>
         </div>
         <div className="text-center">
@@ -53,22 +54,22 @@ export function DayProgress({ stats, targetReps }: DayProgressProps) {
 
       {/* Per-exercise reps row */}
       {stats.totalReps > 0 && (
-        <div className="flex justify-around mt-2 pt-2 border-t border-[var(--c5)]/40">
+        <div className="flex justify-around mt-2">
           {stats.pushupReps > 0 && (
             <div className="text-center">
-              <p className="bg-gradient-to-r from-[#F97316] to-[#FACC15] bg-clip-text text-transparent text-base font-bold">{stats.pushupReps}</p>
+              <p className="text-[#F97316] text-base font-bold">{stats.pushupReps}</p>
               <p className="text-[var(--ct2)] text-xs">Push-ups</p>
             </div>
           )}
           {stats.squatReps > 0 && (
             <div className="text-center">
-              <p className="bg-gradient-to-r from-[#F97316] to-[#FACC15] bg-clip-text text-transparent text-base font-bold">{stats.squatReps}</p>
+              <p className="text-[#F97316] text-base font-bold">{stats.squatReps}</p>
               <p className="text-[var(--ct2)] text-xs">Squats</p>
             </div>
           )}
           {stats.situpReps > 0 && (
             <div className="text-center">
-              <p className="bg-gradient-to-r from-[#F97316] to-[#FACC15] bg-clip-text text-transparent text-base font-bold">{stats.situpReps}s</p>
+              <p className="text-[#F97316] text-base font-bold">{stats.situpReps}s</p>
               <p className="text-[var(--ct2)] text-xs">Plank</p>
             </div>
           )}

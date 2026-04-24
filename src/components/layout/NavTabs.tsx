@@ -55,9 +55,7 @@ export function NavTabs() {
   const { pathname } = useRouter();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--c0)]/95 backdrop-blur h-16 flex flex-col items-stretch">
-      <div className="h-px w-full bg-gradient-to-r from-[#F97316]/40 via-[#22C55E]/40 to-[#60A5FA]/40" />
-      <div className="flex flex-1 items-stretch">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--c0)]/95 backdrop-blur border-t border-[var(--c5)] h-16 flex items-stretch">
       {TABS.map(tab => {
         const active = pathname === tab.href;
         return (
@@ -73,7 +71,6 @@ export function NavTabs() {
           </Link>
         );
       })}
-      </div>
     </nav>
   );
 }

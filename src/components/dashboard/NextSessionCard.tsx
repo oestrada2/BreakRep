@@ -140,7 +140,7 @@ export function NextSessionCard({ sessions, enabledExercises, customExerciseLabe
         {/* Exercise rows with steppers */}
         <div className="space-y-2">
           {allExercises.map(ex => (
-            <div key={ex.key} className="flex items-center gap-3 bg-gradient-to-r from-[var(--c2)] to-[var(--c3)]/40 rounded-xl px-3 py-2.5 border border-[var(--c5)]/30">
+            <div key={ex.key} className="flex items-center gap-3 bg-[var(--c2)]/60 rounded-xl px-3 py-2.5">
               <span className="text-xl w-7 text-center">{ex.emoji}</span>
               <span className="text-[var(--ct0)] text-sm font-semibold flex-1">{ex.label}</span>
               <div className="flex items-center bg-[var(--c4)] border border-[var(--c5)] rounded-lg overflow-hidden">
