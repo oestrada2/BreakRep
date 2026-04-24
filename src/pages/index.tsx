@@ -102,7 +102,6 @@ export default function Today() {
             enabledExercises={enabledExercises}
             targetReps={todayReps}
             repOverrides={repOverrides}
-            excludeId={todaySessions.find(s => s.status === 'pending' || s.status === 'snoozed')?.id}
             onComplete={completeSession}
             onUndo={undoSession}
             onSkip={skipSession}
