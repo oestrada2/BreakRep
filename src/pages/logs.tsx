@@ -182,7 +182,7 @@ export default function Logs() {
                   ].filter(Boolean).join(' · ')}
                 </p>
               )}
-              <p className="text-[var(--ct2)] text-xs mt-1.5">Reps</p>
+              <p className="text-[var(--ct2)] text-xs mt-1.5">Push &amp; squat reps</p>
             </div>
             <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
               <p className={`font-bold text-2xl leading-none ${
@@ -208,7 +208,7 @@ export default function Logs() {
                   ].filter(Boolean).join(' · ')}
                 </p>
               )}
-              <p className="text-[var(--ct2)] text-xs mt-1.5">Total reps</p>
+              <p className="text-[var(--ct2)] text-xs mt-1.5">Push &amp; squat reps</p>
             </div>
             <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
               <p className="text-[var(--ca)] font-bold text-2xl leading-none">{personalBest > 0 ? personalBest : '—'}</p>

@@ -52,7 +52,8 @@ export function computeDayStats(
   const pushupReps = logs.reduce((sum, l) => l.status === 'completed' ? sum + (l.completedReps ?? 0) : sum, 0);
   const squatReps = logs.reduce((sum, l) => l.status === 'completed' ? sum + (l.completedSquatReps ?? 0) : sum, 0);
   const situpReps = logs.reduce((sum, l) => l.status === 'completed' ? sum + (l.completedSitupReps ?? 0) : sum, 0);
-  const totalReps = pushupReps + squatReps + situpReps;
+  // plank (situpReps) is measured in seconds — keep it separate, don't add to rep count
+  const totalReps = pushupReps + squatReps;
 
   return {
     date,
