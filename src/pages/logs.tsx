@@ -3,7 +3,6 @@ import { useAppState } from '@/hooks/useAppState';
 import { NavTabs } from '@/components/layout/NavTabs';
 import { WeekStrip } from '@/components/history/WeekStrip';
 import { CalendarView } from '@/components/history/CalendarView';
-import { DayCard } from '@/components/history/DayCard';
 
 function toLocalISO(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -14,31 +13,12 @@ function offsetISO(days: number) {
 }
 
 export default function Logs() {
-  const { logs, allStats, streak, todaySessions, settings } = useAppState();
+  const { logs, allStats, streak, settings } = useAppState();
 
   const todayISO     = toLocalISO(new Date());
   const yesterdayISO = offsetISO(-1);
   const [selectedDate, setSelectedDate] = useState<string>(yesterdayISO);
   const [view, setView] = useState<'week' | 'calendar'>('week');
-
-  // ── Session map (past days only) ──────────────────────────────────────────
-  const byDate = useMemo(() => {
-    const map: Record<string, typeof todaySessions> = {};
-    Object.values(logs).forEach(s => {
-      if (s.date === todayISO) return;
-      if (!map[s.date]) map[s.date] = [];
-      map[s.date].push(s);
-    });
-    const overnight   = settings.reminders.endHour < settings.reminders.startHour;
-    const windowStart = settings.reminders.startHour;
-    const adjustHour  = (h: number) => overnight && h < windowStart ? h + 24 : h;
-    Object.values(map).forEach(arr => arr.sort((a, b) => {
-      const ah = adjustHour(a.scheduledHour) * 60 + (a.scheduledMinute ?? 0);
-      const bh = adjustHour(b.scheduledHour) * 60 + (b.scheduledMinute ?? 0);
-      return ah - bh;
-    }));
-    return map;
-  }, [logs, todayISO, settings.reminders]);
 
   const statsMap = useMemo(() => {
     const m: Record<string, typeof allStats[0]> = {};
@@ -131,30 +111,13 @@ export default function Logs() {
 
       <main className="max-w-lg mx-auto px-4 pt-5 space-y-5">
 
-        {/* ── Calendar or Day view ── */}
-        {view === 'calendar' ? (
+        {/* ── Calendar view ── */}
+        {view === 'calendar' && (
           <CalendarView
             statsMap={statsMap}
             selectedDate={selectedDate}
             onSelect={date => { setSelectedDate(date); setView('week'); }}
           />
-        ) : (
-          byDate[selectedDate] ? (
-            <DayCard
-              date={selectedDate}
-              sessions={byDate[selectedDate]}
-              stats={statsMap[selectedDate] ?? null}
-              filterStatus="all"
-              enabledExercises={settings.enabledExercises}
-              customExerciseLabels={settings.customExerciseLabels}
-            />
-          ) : (
-            <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-8 text-center">
-              <p className="text-3xl mb-2">📭</p>
-              <p className="text-[var(--ct0)] text-sm font-semibold">No sessions logged</p>
-              <p className="text-[var(--ct2)] text-xs mt-1">No data for this day yet.</p>
-            </div>
-          )
         )}
 
         {/* ── Streak hero ── */}
