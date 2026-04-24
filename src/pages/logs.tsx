@@ -161,10 +161,16 @@ export default function Logs() {
         {/* ── This week ── */}
         <div>
           <p className="text-[var(--ct2)] text-[10px] font-bold uppercase tracking-widest mb-2">This week</p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
               <p className="text-[#22C55E] font-bold text-2xl leading-none">{thisWeek.done}</p>
               <p className="text-[var(--ct2)] text-xs mt-1.5">Sessions done</p>
+            </div>
+            <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
+              <p className={`font-bold text-2xl leading-none ${
+                thisWeek.rate >= 60 ? 'text-[#22C55E]' : thisWeek.rate >= 30 ? 'text-[#FACC15]' : 'text-[#EF4444]'
+              }`}>{thisWeek.rate}%</p>
+              <p className="text-[var(--ct2)] text-xs mt-1.5">Completion</p>
             </div>
             <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
               <p className="text-[#F97316] font-bold text-2xl leading-none">{thisWeek.reps}</p>
@@ -173,43 +179,45 @@ export default function Logs() {
                   {repDiff >= 0 ? '↑' : '↓'} {Math.abs(repDiff)} vs last week
                 </p>
               )}
-              {thisWeek.reps > 0 && (
-                <p className="text-[var(--ct2)] text-[10px] mt-1">
-                  {[
-                    thisWeek.pushupReps > 0 ? `💪 ${thisWeek.pushupReps}` : null,
-                    thisWeek.squatReps  > 0 ? `🦵 ${thisWeek.squatReps}`  : null,
-                    thisWeek.situpReps  > 0 ? `⏱️ ${thisWeek.situpReps}s` : null,
-                  ].filter(Boolean).join(' · ')}
-                </p>
-              )}
               <p className="text-[var(--ct2)] text-xs mt-1.5">Push &amp; squat reps</p>
             </div>
-            <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
-              <p className={`font-bold text-2xl leading-none ${
-                thisWeek.rate >= 60 ? 'text-[#22C55E]' : thisWeek.rate >= 30 ? 'text-[#FACC15]' : 'text-[#EF4444]'
-              }`}>{thisWeek.rate}%</p>
-              <p className="text-[var(--ct2)] text-xs mt-1.5">Completion</p>
-            </div>
+            {thisWeek.situpReps > 0 && (
+              <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
+                <p className="text-[#A78BFA] font-bold text-2xl leading-none">
+                  {Math.round(thisWeek.situpReps / 60) > 0
+                    ? `${Math.round(thisWeek.situpReps / 60)}`
+                    : `${thisWeek.situpReps}s`}
+                </p>
+                {Math.round(thisWeek.situpReps / 60) > 0 && (
+                  <p className="text-[var(--ct2)] text-[10px] mt-0.5">min</p>
+                )}
+                <p className="text-[var(--ct2)] text-xs mt-1.5">Plank time</p>
+              </div>
+            )}
           </div>
         </div>
 
         {/* ── All time ── */}
         <div>
           <p className="text-[var(--ct2)] text-[10px] font-bold uppercase tracking-widest mb-2">All time</p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
               <p className="text-[#22C55E] font-bold text-2xl leading-none">{totalReps}</p>
-              {totalReps > 0 && (
-                <p className="text-[var(--ct2)] text-[10px] mt-1">
-                  {[
-                    allTimePushupReps > 0 ? `💪 ${allTimePushupReps}` : null,
-                    allTimeSquatReps  > 0 ? `🦵 ${allTimeSquatReps}`  : null,
-                    allTimeSitupReps  > 0 ? `⏱️ ${allTimeSitupReps}s` : null,
-                  ].filter(Boolean).join(' · ')}
-                </p>
-              )}
               <p className="text-[var(--ct2)] text-xs mt-1.5">Push &amp; squat reps</p>
             </div>
+            {allTimeSitupReps > 0 && (
+              <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
+                <p className="text-[#A78BFA] font-bold text-2xl leading-none">
+                  {Math.round(allTimeSitupReps / 60) > 0
+                    ? `${Math.round(allTimeSitupReps / 60)}`
+                    : `${allTimeSitupReps}s`}
+                </p>
+                {Math.round(allTimeSitupReps / 60) > 0 && (
+                  <p className="text-[var(--ct2)] text-[10px] mt-0.5">min</p>
+                )}
+                <p className="text-[var(--ct2)] text-xs mt-1.5">Plank time</p>
+              </div>
+            )}
             <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
               <p className="text-[var(--ca)] font-bold text-2xl leading-none">{personalBest > 0 ? personalBest : '—'}</p>
               <p className="text-[var(--ct2)] text-xs mt-1.5">Best session</p>
