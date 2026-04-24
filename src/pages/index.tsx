@@ -93,9 +93,6 @@ export default function Today() {
           targetReps={todayReps}
           repOverrides={repOverrides}
           onRepChange={(key, val) => setRepOverrides(prev => ({ ...prev, [key]: val }))}
-          onComplete={completeSession}
-          onSnooze={snoozeSession}
-          onSkip={skipSession}
         />
 
         {/* Day progress bar */}

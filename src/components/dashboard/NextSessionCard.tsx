@@ -9,9 +9,6 @@ interface NextSessionCardProps {
   targetReps: number;
   repOverrides?: Record<string, number>;
   onRepChange?: (key: string, value: number) => void;
-  onComplete: (id: string, pushups: number, squats: number, situps: number) => void;
-  onSnooze: (id: string) => void;
-  onSkip: (id: string) => void;
 }
 
 function useCountdownToSession(session: SessionLog | null): string {
@@ -49,7 +46,7 @@ const BUILTIN_EXERCISES = [
 
 const DEFAULT_EXERCISES = { pushups: true, squats: true, situps: true };
 
-export function NextSessionCard({ sessions, enabledExercises, customExerciseLabels, targetReps, repOverrides, onRepChange, onComplete, onSnooze, onSkip }: NextSessionCardProps) {
+export function NextSessionCard({ sessions, enabledExercises, customExerciseLabels, targetReps, repOverrides, onRepChange }: NextSessionCardProps) {
   const enabled = enabledExercises ?? DEFAULT_EXERCISES;
   const allExercises = [
     ...BUILTIN_EXERCISES.filter(ex => enabled[ex.key]),
@@ -105,10 +102,6 @@ export function NextSessionCard({ sessions, enabledExercises, customExerciseLabe
     setReps(r => ({ ...r, [key]: String(next) }));
     onRepChange?.(key, next);
   }
-  function parseRep(key: string) {
-    const p = parseInt(getReps(key), 10);
-    return isNaN(p) ? getRepDefault(key) : p;
-  }
 
   return (
     <div className={`relative overflow-hidden rounded-2xl shadow-2xl ${
@@ -145,7 +138,7 @@ export function NextSessionCard({ sessions, enabledExercises, customExerciseLabe
         </div>
 
         {/* Exercise rows with steppers */}
-        <div className="space-y-2 mb-4">
+        <div className="space-y-2">
           {allExercises.map(ex => (
             <div key={ex.key} className="flex items-center gap-3 bg-[var(--c2)]/60 rounded-xl px-3 py-2.5">
               <span className="text-xl w-7 text-center">{ex.emoji}</span>
@@ -170,38 +163,6 @@ export function NextSessionCard({ sessions, enabledExercises, customExerciseLabe
               <span className="text-[var(--ct2)] text-xs w-7">{ex.key === 'situps' ? 'sec' : 'reps'}</span>
             </div>
           ))}
-        </div>
-
-        {/* Primary CTA */}
-        <button
-          onClick={() => {
-            onComplete(
-              next.id,
-              enabled.pushups ? parseRep('pushups') : 0,
-              enabled.squats  ? parseRep('squats')  : 0,
-              enabled.situps  ? parseRep('situps')  : 0,
-            );
-            setReps({});
-          }}
-          className={`w-full py-3.5 rounded-xl font-bold text-sm transition-all active:scale-95 shadow-lg mb-3 ${
-            isReady
-              ? 'bg-[#22C55E] text-[#0B1C2D] shadow-green-500/25 hover:bg-[#16A34A]'
-              : 'bg-[#FACC15] text-[#0B1C2D] shadow-yellow-500/25 hover:bg-[#EAB308]'
-          }`}
-        >
-          {isReady ? '✓ Complete Session' : 'Mark as Done Early'}
-        </button>
-
-        {/* Secondary actions */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => onSnooze(next.id)}
-            className="flex-1 py-2 rounded-xl text-xs font-semibold bg-[var(--c2)] border border-[var(--c5)] text-[#FACC15] hover:border-[#FACC15]/50 transition-colors"
-          >⏰ Snooze</button>
-          <button
-            onClick={() => onSkip(next.id)}
-            className="flex-1 py-2 rounded-xl text-xs font-semibold bg-[var(--c2)] border border-[var(--c5)] text-[#FB923C] hover:border-[#FB923C]/50 transition-colors"
-          >→ Skip</button>
         </div>
       </div>
     </div>
