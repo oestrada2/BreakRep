@@ -1,20 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useAppState } from '@/hooks/useAppState';
 import { NavTabs } from '@/components/layout/NavTabs';
-import { WeekStrip } from '@/components/history/WeekStrip';
-import { DayCard } from '@/components/history/DayCard';
-import { CalendarView } from '@/components/history/CalendarView';
-import { computeDayStats } from '@/lib/compliance';
-
-type FilterStatus = 'all' | 'completed' | 'missed' | 'skipped' | 'snoozed';
-
-const FILTERS: { value: FilterStatus; label: string; color: string }[] = [
-  { value: 'all',       label: 'All',     color: 'var(--ct1)' },
-  { value: 'completed', label: 'Done',    color: '#22C55E' },
-  { value: 'missed',    label: 'Missed',  color: '#EF4444' },
-  { value: 'skipped',   label: 'Skipped', color: '#FB923C' },
-  { value: 'snoozed',   label: 'Snoozed', color: '#FACC15' },
-];
 
 function toLocalISO(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -25,43 +11,9 @@ function offsetISO(days: number) {
 }
 
 export default function Logs() {
-  const { logs, allStats, streak, todaySessions, settings } = useAppState();
+  const { logs, allStats, streak, settings } = useAppState();
 
   const todayISO = toLocalISO(new Date());
-  const yesterdayISO = offsetISO(-1);
-  const [selectedDate, setSelectedDate] = useState<string>(yesterdayISO);
-  const [filter, setFilter]             = useState<FilterStatus>('all');
-  const [view, setView]                 = useState<'day' | 'calendar' | 'all'>('day');
-
-  // ── Session map ────────────────────────────────────────────────────────────
-  const byDate = useMemo(() => {
-    const map: Record<string, typeof todaySessions> = {};
-    Object.values(logs).forEach(s => {
-      if (!map[s.date]) map[s.date] = [];
-      map[s.date].push(s);
-    });
-    // Merge today's generated sessions so pending ones appear before persisted
-    if (todaySessions.length > 0) {
-      const d = todaySessions[0].date;
-      const existingIds = new Set((map[d] ?? []).map(s => s.id));
-      map[d] = [...(map[d] ?? []), ...todaySessions.filter(s => !existingIds.has(s.id))];
-    }
-    const overnight   = settings.reminders.endHour < settings.reminders.startHour;
-    const windowStart = settings.reminders.startHour;
-    const adjustHour  = (h: number) => overnight && h < windowStart ? h + 24 : h;
-    Object.values(map).forEach(arr => arr.sort((a, b) => {
-      const ah = adjustHour(a.scheduledHour) * 60 + (a.scheduledMinute ?? 0);
-      const bh = adjustHour(b.scheduledHour) * 60 + (b.scheduledMinute ?? 0);
-      return ah - bh;
-    }));
-    return map;
-  }, [logs, todaySessions]);
-
-  const statsMap = useMemo(() => {
-    const m: Record<string, ReturnType<typeof computeDayStats>> = {};
-    allStats.forEach(s => { m[s.date] = s; });
-    return m;
-  }, [allStats]);
 
   // ── This week vs last week ─────────────────────────────────────────────────
   const thisWeekStats = useMemo(() =>
@@ -76,8 +28,8 @@ export default function Logs() {
     done: thisWeekStats.reduce((n, s) => n + s.completed, 0),
     reps: thisWeekStats.reduce((n, s) => n + s.totalReps, 0),
     pushupReps: thisWeekStats.reduce((n, s) => n + s.pushupReps, 0),
-    squatReps: thisWeekStats.reduce((n, s) => n + s.squatReps, 0),
-    situpReps: thisWeekStats.reduce((n, s) => n + s.situpReps, 0),
+    squatReps:  thisWeekStats.reduce((n, s) => n + s.squatReps, 0),
+    situpReps:  thisWeekStats.reduce((n, s) => n + s.situpReps, 0),
     rate: thisWeekStats.length
       ? Math.round(thisWeekStats.reduce((n, s) => n + s.complianceRate, 0) / thisWeekStats.length * 100)
       : 0,
@@ -90,10 +42,7 @@ export default function Logs() {
   const repDiff = thisWeek.reps - lastWeekReps;
 
   // ── All-time ───────────────────────────────────────────────────────────────
-  const totalReps = useMemo(() =>
-    allStats.reduce((n, s) => n + s.totalReps, 0),
-  [allStats]);
-
+  const totalReps        = useMemo(() => allStats.reduce((n, s) => n + s.totalReps, 0),   [allStats]);
   const allTimePushupReps = useMemo(() => allStats.reduce((n, s) => n + s.pushupReps, 0), [allStats]);
   const allTimeSquatReps  = useMemo(() => allStats.reduce((n, s) => n + s.squatReps, 0),  [allStats]);
   const allTimeSitupReps  = useMemo(() => allStats.reduce((n, s) => n + s.situpReps, 0),  [allStats]);
@@ -110,6 +59,12 @@ export default function Logs() {
 
   // ── Weekly streak dots (Mon–Sun) ───────────────────────────────────────────
   const threshold = settings.deload.complianceThreshold;
+  const statsMap = useMemo(() => {
+    const m: Record<string, typeof allStats[0]> = {};
+    allStats.forEach(s => { m[s.date] = s; });
+    return m;
+  }, [allStats]);
+
   const streakDots = useMemo(() => {
     const dow = new Date().getDay();
     const mondayOffset = dow === 0 ? -6 : 1 - dow;
@@ -124,33 +79,12 @@ export default function Logs() {
 
   const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-  // ── All-view date list ─────────────────────────────────────────────────────
-  const allDates = useMemo(() =>
-    Object.keys(byDate).filter(d => d !== todayISO).sort((a, b) => b.localeCompare(a)),
-  [byDate, todayISO]);
-
   return (
     <div className="min-h-screen bg-[var(--c0)] text-[var(--ct0)] font-sans pb-20">
       {/* ── Header ── */}
-      <header className="sticky top-0 z-50 bg-[var(--c0)]/95 backdrop-blur border-b border-[var(--c2)] px-4 pt-4 pb-3 space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-[var(--ct0)] text-xl font-bold">History</h1>
-            <p className="text-[var(--ct2)] text-xs mt-0.5">Your stats and session log</p>
-          </div>
-          <div className="flex bg-[var(--c2)] border border-[var(--c5)] rounded-xl p-0.5 gap-0.5">
-            {([['day', 'Day'], ['calendar', 'Cal'], ['all', 'All']] as const).map(([v, label]) => (
-              <button key={v} onClick={() => setView(v)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  view === v ? 'bg-[#FACC15] text-[#0B1C2D]' : 'text-[var(--ct2)] hover:text-[var(--ct1)]'
-                }`}>{label}
-              </button>
-            ))}
-          </div>
-        </div>
-        {view === 'day' && (
-          <WeekStrip selectedDate={selectedDate} statsMap={statsMap} onSelect={setSelectedDate} />
-        )}
+      <header className="sticky top-0 z-50 bg-[var(--c0)]/95 backdrop-blur border-b border-[var(--c2)] px-4 pt-4 pb-3">
+        <h1 className="text-[var(--ct0)] text-xl font-bold">History</h1>
+        <p className="text-[var(--ct2)] text-xs mt-0.5">Your stats and progress</p>
       </header>
 
       <main className="max-w-lg mx-auto px-4 pt-5 space-y-5">
@@ -176,9 +110,9 @@ export default function Logs() {
                   const dot = streakDots[i];
                   return (
                     <div key={i} className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${
-                      dot === 'hit'    ? 'bg-[#22C55E] text-white' :
-                      dot === 'miss'   ? 'bg-[#EF4444]/20 text-[#EF4444]' :
-                                        'bg-[var(--c4)] text-[var(--ct2)]'
+                      dot === 'hit'  ? 'bg-[#22C55E] text-white' :
+                      dot === 'miss' ? 'bg-[#EF4444]/20 text-[#EF4444]' :
+                                       'bg-[var(--c4)] text-[var(--ct2)]'
                     }`}>
                       {dot === 'hit' ? '✓' : label}
                     </div>
@@ -257,90 +191,6 @@ export default function Logs() {
               <p className="text-[var(--ct2)] text-xs mt-1.5">Consistency</p>
             </div>
           </div>
-        </div>
-
-        {/* ── 4. Session log ── */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-[var(--ct2)] text-[10px] font-bold uppercase tracking-widest">Session log</p>
-            <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
-              {FILTERS.map(f => (
-                <button
-                  key={f.value}
-                  onClick={() => setFilter(f.value)}
-                  className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold transition-all border ${
-                    filter === f.value
-                      ? 'border-transparent text-[#0B1C2D]'
-                      : 'bg-transparent border-[var(--c5)] text-[var(--ct2)] hover:text-[var(--ct1)]'
-                  }`}
-                  style={filter === f.value ? { background: f.color } : {}}
-                >{f.label}</button>
-              ))}
-            </div>
-          </div>
-
-          {/* Calendar */}
-          {view === 'calendar' && (
-            <div className="space-y-4">
-              <CalendarView
-                statsMap={statsMap}
-                selectedDate={selectedDate}
-                onSelect={date => { setSelectedDate(date); setView('day'); }}
-              />
-              <p className="text-[var(--ct2)] text-xs text-center">Tap a day to see its sessions</p>
-            </div>
-          )}
-
-          {/* Day */}
-          {view === 'day' && (
-            selectedDate === todayISO ? (
-              <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-8 text-center">
-                <p className="text-3xl mb-2">📅</p>
-                <p className="text-[var(--ct0)] text-sm font-semibold">Today is on the home screen</p>
-                <p className="text-[var(--ct2)] text-xs mt-1">Select a past day to view its sessions.</p>
-              </div>
-            ) : byDate[selectedDate] ? (
-              <DayCard
-                date={selectedDate}
-                sessions={byDate[selectedDate]}
-                stats={statsMap[selectedDate] ?? null}
-                filterStatus={filter}
-                enabledExercises={settings.enabledExercises}
-                customExerciseLabels={settings.customExerciseLabels}
-              />
-            ) : (
-              <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-8 text-center">
-                <p className="text-3xl mb-2">📭</p>
-                <p className="text-[var(--ct0)] text-sm font-semibold">No sessions logged</p>
-                <p className="text-[var(--ct2)] text-xs mt-1">No data for this day yet.</p>
-              </div>
-            )
-          )}
-
-          {/* All */}
-          {view === 'all' && (
-            allDates.length === 0 ? (
-              <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-8 text-center">
-                <p className="text-3xl mb-2">📭</p>
-                <p className="text-[var(--ct0)] text-sm font-semibold">No history yet</p>
-                <p className="text-[var(--ct2)] text-xs mt-1">Complete your first session to see it here.</p>
-              </div>
-            ) : (
-              <div className="space-y-5">
-                {allDates.map(date => (
-                  <DayCard
-                    key={date}
-                    date={date}
-                    sessions={byDate[date]}
-                    stats={statsMap[date] ?? null}
-                    filterStatus={filter}
-                    enabledExercises={settings.enabledExercises}
-                    customExerciseLabels={settings.customExerciseLabels}
-                  />
-                ))}
-              </div>
-            )
-          )}
         </div>
 
       </main>
