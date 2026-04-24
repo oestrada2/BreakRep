@@ -98,7 +98,7 @@ export default function Logs() {
             {([['week', 'Week'], ['calendar', 'Calendar']] as const).map(([v, label]) => (
               <button key={v} onClick={() => setView(v)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  view === v ? 'bg-[#FACC15] text-[#0B1C2D]' : 'text-[var(--ct2)] hover:text-[var(--ct1)]'
+                  view === v ? 'bg-[#F97316] text-[#09090B]' : 'text-[var(--ct2)] hover:text-[var(--ct1)]'
                 }`}>{label}
               </button>
             ))}
@@ -167,7 +167,7 @@ export default function Logs() {
               <p className="text-[var(--ct2)] text-xs mt-1.5">Sessions done</p>
             </div>
             <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
-              <p className="text-[#FACC15] font-bold text-2xl leading-none">{thisWeek.reps}</p>
+              <p className="text-[#F97316] font-bold text-2xl leading-none">{thisWeek.reps}</p>
               {lastWeekReps > 0 && (
                 <p className={`text-[10px] font-semibold mt-0.5 ${repDiff >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
                   {repDiff >= 0 ? '↑' : '↓'} {Math.abs(repDiff)} vs last week

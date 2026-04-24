@@ -59,7 +59,7 @@ export function SessionList({ sessions, enabledExercises, targetReps, repOverrid
                       enabled.squats  ? (repOverrides?.squats  ?? targetReps) : 0,
                       enabled.situps  ? Math.max(repOverrides?.situps ?? targetReps, 60) : 0,
                     )}
-                    className="px-3 py-1 bg-[#22C55E] text-[#0B1C2D] rounded-lg text-xs font-bold hover:bg-[#16A34A] transition-colors"
+                    className="px-3 py-1 bg-[#22C55E] text-[#09090B] rounded-lg text-xs font-bold hover:bg-[#16A34A] transition-colors"
                   >Done</button>
                   {canSnooze && (
                     <button

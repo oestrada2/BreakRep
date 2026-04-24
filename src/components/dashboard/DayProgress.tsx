@@ -16,7 +16,7 @@ export function DayProgress({ stats, targetReps }: DayProgressProps) {
     <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-4">
       <div className="flex items-center justify-between mb-3">
         <p className="text-[var(--ct0)] text-sm font-semibold">Today's Progress</p>
-        <span className={`text-sm font-bold ${pct >= 60 ? 'text-[#22C55E]' : pct >= 30 ? 'text-[#FACC15]' : 'text-[#EF4444]'}`}>
+        <span className={`text-sm font-bold ${pct >= 60 ? 'text-[#22C55E]' : pct >= 30 ? 'text-[#F97316]' : 'text-[#EF4444]'}`}>
           {pct}%
         </span>
       </div>
@@ -57,19 +57,19 @@ export function DayProgress({ stats, targetReps }: DayProgressProps) {
         <div className="flex justify-around mt-2">
           {stats.pushupReps > 0 && (
             <div className="text-center">
-              <p className="text-[#FACC15] text-base font-bold">{stats.pushupReps}</p>
+              <p className="text-[#F97316] text-base font-bold">{stats.pushupReps}</p>
               <p className="text-[var(--ct2)] text-xs">Push-ups</p>
             </div>
           )}
           {stats.squatReps > 0 && (
             <div className="text-center">
-              <p className="text-[#FACC15] text-base font-bold">{stats.squatReps}</p>
+              <p className="text-[#F97316] text-base font-bold">{stats.squatReps}</p>
               <p className="text-[var(--ct2)] text-xs">Squats</p>
             </div>
           )}
           {stats.situpReps > 0 && (
             <div className="text-center">
-              <p className="text-[#FACC15] text-base font-bold">{stats.situpReps}s</p>
+              <p className="text-[#F97316] text-base font-bold">{stats.situpReps}s</p>
               <p className="text-[var(--ct2)] text-xs">Plank</p>
             </div>
           )}

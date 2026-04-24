@@ -109,7 +109,7 @@ export function NextSessionCard({ sessions, enabledExercises, customExerciseLabe
         ? 'bg-gradient-to-br from-[#1A2A0D] via-[#0D2218] to-[var(--c2)] border border-[#22C55E]/40'
         : next.status === 'snoozed'
         ? 'bg-gradient-to-br from-[#1A1A0D] to-[var(--c2)] border border-[#FACC15]/30'
-        : 'bg-gradient-to-br from-[#0D1A2A] to-[var(--c0)] border border-[var(--c5)]'
+        : 'bg-gradient-to-br from-[#161618] to-[var(--c0)] border border-[var(--c5)]'
     }`}>
       {/* Glow accent */}
       <div className={`absolute -top-10 -right-10 w-32 h-32 rounded-full blur-2xl opacity-20 ${
@@ -130,7 +130,7 @@ export function NextSessionCard({ sessions, enabledExercises, customExerciseLabe
           </div>
           <div className={`px-3 py-1.5 rounded-full text-xs font-bold ${
             isReady
-              ? 'bg-[#22C55E] text-[#0B1C2D] animate-pulse'
+              ? 'bg-[#22C55E] text-[#09090B] animate-pulse'
               : 'bg-[var(--c3)] text-[var(--ca)] border border-[var(--ca)]/30'
           }`}>
             {isReady ? '● Ready now' : `⏱ ${countdown}`}

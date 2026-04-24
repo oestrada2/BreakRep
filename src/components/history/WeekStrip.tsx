@@ -107,7 +107,7 @@ export function WeekStrip({ selectedDate, statsMap, onSelect }: WeekStripProps) 
               disabled={isFuture}
               className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 rounded-xl transition-all border ${
                 isSelected
-                  ? 'border-[#FACC15] bg-[#FACC15]'
+                  ? 'border-[#F97316] bg-[#F97316]'
                   : isToday
                   ? 'border-transparent bg-[var(--c3)]'
                   : isFuture
@@ -116,11 +116,11 @@ export function WeekStrip({ selectedDate, statsMap, onSelect }: WeekStripProps) 
               }`}
               style={!isSelected ? glowStyle : {}}
             >
-              <span className={`text-xs font-medium ${isSelected ? 'text-[#0B1C2D]' : 'text-[var(--ct2)]'}`}>
+              <span className={`text-xs font-medium ${isSelected ? 'text-[#09090B]' : 'text-[var(--ct2)]'}`}>
                 {day.label}
               </span>
               <span className={`text-sm font-bold ${
-                isSelected  ? 'text-[#0B1C2D]'
+                isSelected  ? 'text-[#09090B]'
                 : isToday   ? 'text-[var(--ca)]'
                 : ringColor ? 'text-[var(--ct0)]'
                 : 'text-[var(--ct2)]'
