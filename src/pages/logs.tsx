@@ -116,7 +116,7 @@ export default function Logs() {
           <CalendarView
             statsMap={statsMap}
             selectedDate={selectedDate}
-            onSelect={date => { setSelectedDate(date); setView('week'); }}
+            onSelect={date => setSelectedDate(date)}
           />
         )}
 
