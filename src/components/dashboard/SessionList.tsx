@@ -14,11 +14,11 @@ interface SessionListProps {
 }
 
 const STATUS_CONFIG = {
-  completed: { dot: 'bg-[#22C55E]',                                label: 'Done',    labelColor: 'text-[#22C55E]' },
-  missed:    { dot: 'bg-[#EF4444]',                                label: 'Missed',  labelColor: 'text-[#EF4444]' },
-  skipped:   { dot: 'bg-[#FB923C]',                                label: 'Skipped', labelColor: 'text-[#FB923C]' },
-  snoozed:   { dot: 'bg-[#FACC15]',                                label: 'Snoozed', labelColor: 'text-[#FACC15]' },
-  pending:   { dot: 'bg-[var(--c5)] border border-[var(--ca)]/40', label: 'Up next', labelColor: 'text-[var(--ct2)]' },
+  completed: { dot: 'bg-gradient-to-br from-[#22C55E] to-[#16A34A]',             label: 'Done',    labelColor: 'text-[#22C55E]' },
+  missed:    { dot: 'bg-[#EF4444]',                                               label: 'Missed',  labelColor: 'text-[#EF4444]' },
+  skipped:   { dot: 'bg-[#FB923C]',                                               label: 'Skipped', labelColor: 'text-[#FB923C]' },
+  snoozed:   { dot: 'bg-[#FACC15]',                                               label: 'Snoozed', labelColor: 'text-[#FACC15]' },
+  pending:   { dot: 'border-2 border-[var(--c5)] bg-transparent',                 label: 'Up next', labelColor: 'text-[var(--ct2)]' },
 };
 
 const DEFAULT_EXERCISES = { pushups: true, squats: true, situps: true };
@@ -44,7 +44,7 @@ export function SessionList({ sessions, enabledExercises, targetReps, repOverrid
           const canUndo   = s.status === 'completed' || s.status === 'skipped' || s.status === 'snoozed';
 
           return (
-            <div key={s.id} className="flex items-center gap-2.5 bg-[var(--c0)]/40 rounded-xl px-3 py-2.5">
+            <div key={s.id} className="flex items-center gap-2.5 bg-gradient-to-r from-[var(--c2)] to-[var(--c0)] rounded-xl px-3 py-2.5 border border-[var(--c5)]/40">
               <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${cfg.dot}`} />
               <span className="text-[var(--ct1)] text-xs font-medium flex-1">
                 {formatTime(s.scheduledHour, s.scheduledMinute ?? 0)}
@@ -59,7 +59,7 @@ export function SessionList({ sessions, enabledExercises, targetReps, repOverrid
                       enabled.squats  ? (repOverrides?.squats  ?? targetReps) : 0,
                       enabled.situps  ? Math.max(repOverrides?.situps ?? targetReps, 60) : 0,
                     )}
-                    className="px-3 py-1 bg-[#22C55E] text-[#09090B] rounded-lg text-xs font-bold hover:bg-[#16A34A] transition-colors"
+                    className="px-3 py-1 bg-gradient-to-r from-[#16A34A] to-[#22C55E] text-[#09090B] rounded-lg text-xs font-bold hover:from-[#15803D] hover:to-[#16A34A] transition-all shadow-sm shadow-green-500/20"
                   >Done</button>
                   {canSnooze && (
                     <button
@@ -69,7 +69,7 @@ export function SessionList({ sessions, enabledExercises, targetReps, repOverrid
                   )}
                   <button
                     onClick={() => onSkip(s.id)}
-                    className="px-2 py-1 bg-[#FB923C]/10 text-[#FB923C] rounded-lg text-xs font-semibold border border-[#FB923C]/20 hover:bg-[#FB923C]/20 transition-colors"
+                    className="px-2 py-1 bg-[var(--c3)] text-[var(--ct2)] rounded-lg text-xs font-semibold border border-[var(--c5)] hover:text-[var(--ct1)] transition-colors"
                   >Skip</button>
                 </div>
               ) : (

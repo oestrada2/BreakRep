@@ -67,7 +67,7 @@ export default function Today() {
   return (
     <div className="min-h-screen bg-[var(--c0)] text-[var(--ct0)] font-sans pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-[var(--c0)]/95 backdrop-blur border-b border-[var(--c2)] px-4 pt-4 pb-3">
+      <header className="sticky top-0 z-50 bg-gradient-to-b from-[var(--c1)]/95 to-[var(--c0)]/95 backdrop-blur border-b border-[var(--c5)]/40 px-4 pt-4 pb-3">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-[var(--ct0)] text-xl font-bold">{greeting}</h1>
@@ -96,7 +96,7 @@ export default function Today() {
         />
 
         {/* Session timeline */}
-        <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-4">
+        <div className="bg-gradient-to-br from-[var(--c2)] to-[var(--c0)] border border-[var(--c5)]/60 rounded-2xl p-4">
           <SessionList
             sessions={todaySessions}
             enabledExercises={enabledExercises}

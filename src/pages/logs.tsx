@@ -26,7 +26,6 @@ export default function Logs() {
     return m;
   }, [allStats]);
 
-  // ── This week vs last week ─────────────────────────────────────────────────
   const thisWeekStats = useMemo(() =>
     allStats.filter(s => s.date >= offsetISO(-6)),
   [allStats]);
@@ -52,7 +51,6 @@ export default function Logs() {
 
   const repDiff = thisWeek.reps - lastWeekReps;
 
-  // ── All-time ───────────────────────────────────────────────────────────────
   const totalReps         = useMemo(() => allStats.reduce((n, s) => n + s.totalReps, 0),   [allStats]);
   const allTimePushupReps = useMemo(() => allStats.reduce((n, s) => n + s.pushupReps, 0),  [allStats]);
   const allTimeSquatReps  = useMemo(() => allStats.reduce((n, s) => n + s.squatReps, 0),   [allStats]);
@@ -68,7 +66,6 @@ export default function Logs() {
       : 0,
   [allStats]);
 
-  // ── Weekly streak dots (Mon–Sun) ───────────────────────────────────────────
   const threshold = settings.deload.complianceThreshold;
 
   const streakDots = useMemo(() => {
@@ -88,7 +85,7 @@ export default function Logs() {
   return (
     <div className="min-h-screen bg-[var(--c0)] text-[var(--ct0)] font-sans pb-20">
       {/* ── Header ── */}
-      <header className="sticky top-0 z-50 bg-[var(--c0)]/95 backdrop-blur border-b border-[var(--c2)] px-4 pt-4 pb-3 space-y-3">
+      <header className="sticky top-0 z-50 bg-gradient-to-b from-[var(--c1)]/95 to-[var(--c0)]/95 backdrop-blur border-b border-[var(--c5)]/40 px-4 pt-4 pb-3 space-y-3">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-[var(--ct0)] text-xl font-bold">History</h1>
@@ -98,7 +95,9 @@ export default function Logs() {
             {([['week', 'Week'], ['calendar', 'Calendar']] as const).map(([v, label]) => (
               <button key={v} onClick={() => setView(v)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  view === v ? 'bg-[#F97316] text-[#09090B]' : 'text-[var(--ct2)] hover:text-[var(--ct1)]'
+                  view === v
+                    ? 'bg-gradient-to-r from-[#F97316] to-[#FB923C] text-[#09090B] shadow-lg shadow-orange-500/20'
+                    : 'text-[var(--ct2)] hover:text-[var(--ct1)]'
                 }`}>{label}
               </button>
             ))}
@@ -121,13 +120,13 @@ export default function Logs() {
         )}
 
         {/* ── Streak hero ── */}
-        <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-5">
+        <div className="bg-gradient-to-br from-[#1E1008] via-[#111115] to-[#09090B] border border-[#F97316]/25 rounded-2xl p-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-[#FACC15]/10 flex items-center justify-center text-3xl shrink-0">🔥</div>
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#F97316]/25 to-[#FACC15]/10 flex items-center justify-center text-3xl shrink-0">🔥</div>
               <div>
-                <p className="text-[var(--ct0)] text-4xl font-black leading-none">
-                  {streak}
+                <p className="text-4xl font-black leading-none">
+                  <span className="bg-gradient-to-r from-[#F97316] to-[#FACC15] bg-clip-text text-transparent">{streak}</span>
                   <span className="text-lg font-semibold text-[var(--ct2)] ml-1.5">day{streak !== 1 ? 's' : ''}</span>
                 </p>
                 <p className="text-[var(--ct2)] text-xs mt-1">Current streak</p>
@@ -140,7 +139,7 @@ export default function Logs() {
                   const dot = streakDots[i];
                   return (
                     <div key={i} className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${
-                      dot === 'hit'  ? 'bg-[#22C55E] text-white' :
+                      dot === 'hit'  ? 'bg-gradient-to-br from-[#22C55E] to-[#16A34A] text-white' :
                       dot === 'miss' ? 'bg-[#EF4444]/20 text-[#EF4444]' :
                                        'bg-[var(--c4)] text-[var(--ct2)]'
                     }`}>
@@ -162,12 +161,12 @@ export default function Logs() {
         <div>
           <p className="text-[var(--ct2)] text-[10px] font-bold uppercase tracking-widest mb-2">This week</p>
           <div className="grid grid-cols-3 gap-2">
-            <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
-              <p className="text-[#22C55E] font-bold text-2xl leading-none">{thisWeek.done}</p>
+            <div className="bg-gradient-to-br from-[#0D1F12] to-[#111115] border border-[#22C55E]/20 rounded-2xl p-3.5 text-center">
+              <p className="bg-gradient-to-r from-[#22C55E] to-[#4ADE80] bg-clip-text text-transparent font-bold text-2xl leading-none">{thisWeek.done}</p>
               <p className="text-[var(--ct2)] text-xs mt-1.5">Sessions done</p>
             </div>
-            <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
-              <p className="text-[#F97316] font-bold text-2xl leading-none">{thisWeek.reps}</p>
+            <div className="bg-gradient-to-br from-[#1A0E05] to-[#111115] border border-[#F97316]/20 rounded-2xl p-3.5 text-center">
+              <p className="bg-gradient-to-r from-[#F97316] to-[#FACC15] bg-clip-text text-transparent font-bold text-2xl leading-none">{thisWeek.reps}</p>
               {lastWeekReps > 0 && (
                 <p className={`text-[10px] font-semibold mt-0.5 ${repDiff >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
                   {repDiff >= 0 ? '↑' : '↓'} {Math.abs(repDiff)} vs last week
@@ -184,9 +183,11 @@ export default function Logs() {
               )}
               <p className="text-[var(--ct2)] text-xs mt-1.5">Reps</p>
             </div>
-            <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
+            <div className="bg-gradient-to-br from-[var(--c3)] to-[#111115] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
               <p className={`font-bold text-2xl leading-none ${
-                thisWeek.rate >= 60 ? 'text-[#22C55E]' : thisWeek.rate >= 30 ? 'text-[#FACC15]' : 'text-[#EF4444]'
+                thisWeek.rate >= 60 ? 'bg-gradient-to-r from-[#22C55E] to-[#4ADE80] bg-clip-text text-transparent'
+                : thisWeek.rate >= 30 ? 'text-[#FACC15]'
+                : 'text-[#EF4444]'
               }`}>{thisWeek.rate}%</p>
               <p className="text-[var(--ct2)] text-xs mt-1.5">Completion</p>
             </div>
@@ -197,8 +198,8 @@ export default function Logs() {
         <div>
           <p className="text-[var(--ct2)] text-[10px] font-bold uppercase tracking-widest mb-2">All time</p>
           <div className="grid grid-cols-3 gap-2">
-            <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
-              <p className="text-[#22C55E] font-bold text-2xl leading-none">{totalReps}</p>
+            <div className="bg-gradient-to-br from-[#0D1F12] to-[#111115] border border-[#22C55E]/20 rounded-2xl p-3.5 text-center">
+              <p className="bg-gradient-to-r from-[#22C55E] to-[#4ADE80] bg-clip-text text-transparent font-bold text-2xl leading-none">{totalReps}</p>
               {totalReps > 0 && (
                 <p className="text-[var(--ct2)] text-[10px] mt-1">
                   {[
@@ -210,13 +211,15 @@ export default function Logs() {
               )}
               <p className="text-[var(--ct2)] text-xs mt-1.5">Total reps</p>
             </div>
-            <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
-              <p className="text-[var(--ca)] font-bold text-2xl leading-none">{personalBest > 0 ? personalBest : '—'}</p>
+            <div className="bg-gradient-to-br from-[#0A1020] to-[#111115] border border-[var(--ca)]/20 rounded-2xl p-3.5 text-center">
+              <p className="bg-gradient-to-r from-[#60A5FA] to-[#93C5FD] bg-clip-text text-transparent font-bold text-2xl leading-none">{personalBest > 0 ? personalBest : '—'}</p>
               <p className="text-[var(--ct2)] text-xs mt-1.5">Best session</p>
             </div>
-            <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
+            <div className="bg-gradient-to-br from-[var(--c3)] to-[#111115] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
               <p className={`font-bold text-2xl leading-none ${
-                consistency >= 60 ? 'text-[#22C55E]' : consistency >= 30 ? 'text-[#FACC15]' : 'text-[#EF4444]'
+                consistency >= 60 ? 'bg-gradient-to-r from-[#22C55E] to-[#4ADE80] bg-clip-text text-transparent'
+                : consistency >= 30 ? 'text-[#FACC15]'
+                : 'text-[#EF4444]'
               }`}>{consistency}%</p>
               <p className="text-[var(--ct2)] text-xs mt-1.5">Consistency</p>
             </div>
