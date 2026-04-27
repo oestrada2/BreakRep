@@ -10,6 +10,7 @@ interface NextSessionCardProps {
   targetReps: number;
   repOverrides?: Record<string, number>;
   onRepChange?: (key: string, value: number) => void;
+  noSessionsHint?: string;
 }
 
 function useCountdownToSession(session: SessionLog | null): string {
@@ -47,7 +48,7 @@ const BUILTIN_EXERCISES = [
 
 const DEFAULT_EXERCISES = { pushups: true, squats: true, situps: true };
 
-export function NextSessionCard({ sessions, enabledExercises, customExerciseLabels, customExerciseTrackingTypes, targetReps, repOverrides, onRepChange }: NextSessionCardProps) {
+export function NextSessionCard({ sessions, enabledExercises, customExerciseLabels, customExerciseTrackingTypes, targetReps, repOverrides, onRepChange, noSessionsHint }: NextSessionCardProps) {
   const enabled = enabledExercises ?? DEFAULT_EXERCISES;
   const allExercises = [
     ...BUILTIN_EXERCISES.filter(ex => enabled[ex.key]).map(ex => ({
@@ -79,7 +80,7 @@ export function NextSessionCard({ sessions, enabledExercises, customExerciseLabe
               {allDone ? 'All sessions done!' : 'No sessions scheduled'}
             </p>
             <p className="text-[var(--ct1)] text-xs mt-0.5">
-              {allDone ? 'Great work today. Rest up.' : 'Check your reminder settings.'}
+              {allDone ? 'Great work today. Rest up.' : (noSessionsHint ?? 'Check your reminder settings.')}
             </p>
           </div>
         </div>

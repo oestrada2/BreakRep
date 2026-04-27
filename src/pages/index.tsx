@@ -118,6 +118,12 @@ export default function Today() {
               targetReps={todayReps}
               repOverrides={repOverrides}
               onRepChange={(key, val) => setRepOverrides(prev => ({ ...prev, [key]: val }))}
+              noSessionsHint={
+                settings.reminders.scheduleMode === 'custom' &&
+                (settings.reminders.customMinutes ?? []).length === 0
+                  ? 'Custom schedule has no time marks — select some in Settings, or switch to Every hour.'
+                  : undefined
+              }
             />
             <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-4">
               <SessionList
