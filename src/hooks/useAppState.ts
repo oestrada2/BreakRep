@@ -85,10 +85,17 @@ export function useAppState() {
   // ── Derived helpers ────────────────────────────────────────────────────────
   const today = new Date().toISOString().split('T')[0];
 
-  // Build allStats from logs for past days only — today uses the full resolved session list
+  const activeDays = settings.activeDays ?? [0, 1, 2, 3, 4, 5, 6];
+  const isActiveDay = (dateStr: string) => {
+    const [y, mo, d] = dateStr.split('-').map(Number);
+    return activeDays.includes(new Date(y, mo - 1, d).getDay());
+  };
+
+  // Build allStats from logs for past days only — today uses the full resolved session list.
+  // Rest days are excluded so they don't skew compliance or streak calculations.
   const pastStats: DailyStats[] = Object.values(
     Object.entries(logs)
-      .filter(([, log]) => log.date !== today)
+      .filter(([, log]) => log.date !== today && isActiveDay(log.date))
       .reduce<Record<string, SessionLog[]>>((acc, [, log]) => {
         acc[log.date] = acc[log.date] || [];
         acc[log.date].push(log);
@@ -118,10 +125,11 @@ export function useAppState() {
 
   const todayStats = computeDayStats(today, todaySessionsResolved, settings.customExerciseTrackingTypes);
 
-  // allStats includes today's full session list so compliance is accurate
+  // allStats includes today's full session list so compliance is accurate.
+  // Today is only included if it's an active day — rest days don't count toward stats.
   const allStats: DailyStats[] = [
     ...pastStats.filter(s => s.date !== today),
-    todayStats,
+    ...(isActiveDay(today) ? [todayStats] : []),
   ];
   const streak = calculateStreak(allStats, settings.deload.complianceThreshold, settings.activeDays);
 
