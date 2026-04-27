@@ -81,6 +81,7 @@ export interface AppSettings {
   isTeamAdmin?: boolean;
   /** @deprecated migrated to teams[] */
   teamMembers?: TeamMember[];
+  activeDays?: number[];          // 0=Sun,1=Mon,...,6=Sat; undefined = all days
   startDate: string;             // ISO date string YYYY-MM-DD
   onboardingComplete: boolean;
 }

@@ -590,6 +590,34 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification, 
         </div>
 
         <div className="px-4 py-3.5 border-b border-[var(--c4)]">
+          <p className="text-[var(--ct0)] text-sm mb-0.5">Active days</p>
+          <p className="text-[var(--ct2)] text-xs mb-3">Sessions are only scheduled on these days</p>
+          <div className="flex gap-1.5">
+            {(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const).map((label, i) => {
+              const days = settings.activeDays ?? [0, 1, 2, 3, 4, 5, 6];
+              const on = days.includes(i);
+              return (
+                <button
+                  key={i}
+                  onClick={() => {
+                    const next = on
+                      ? days.filter(d => d !== i)
+                      : [...days, i].sort((a, b) => a - b);
+                    if (next.length === 0) return; // must have at least 1 day
+                    onChange({ activeDays: next });
+                  }}
+                  className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-colors ${
+                    on
+                      ? 'bg-[#FACC15] text-[#0B1C2D]'
+                      : 'bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct2)] hover:text-[var(--ct1)]'
+                  }`}
+                >{label}</button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="px-4 py-3.5 border-b border-[var(--c4)]">
           <p className="text-[var(--ct0)] text-sm mb-0.5">Schedule</p>
           <p className="text-[var(--ct2)] text-xs mb-3">How often reminders are sent within your active hours</p>
           <SegmentControl<ScheduleMode>

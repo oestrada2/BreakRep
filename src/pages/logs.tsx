@@ -111,17 +111,22 @@ export default function Logs() {
   // ── Weekly streak dots (Mon–Sun) ───────────────────────────────────────────
   const threshold = settings.deload.complianceThreshold;
 
+  const activeDays = settings.activeDays ?? [0, 1, 2, 3, 4, 5, 6];
+
   const streakDots = useMemo(() => {
     const dow = new Date().getDay();
     const mondayOffset = dow === 0 ? -6 : 1 - dow;
     return Array.from({ length: 7 }, (_, i) => {
+      // i=0 → Monday (dow=1), adjust to get 0-based Sun-Sat index
+      const calDow = (i + 1) % 7; // Mon=1,...,Sun=0
+      if (!activeDays.includes(calDow)) return 'rest' as const;
       const date = offsetISO(mondayOffset + i);
       if (date > todayISO) return 'future' as const;
       const stat = statsMap[date];
       if (!stat) return 'empty' as const;
       return stat.complianceRate >= threshold ? 'hit' as const : 'miss' as const;
     });
-  }, [statsMap, todayISO, threshold]);
+  }, [statsMap, todayISO, threshold, activeDays]);
 
   const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
@@ -182,9 +187,10 @@ export default function Logs() {
                     <div key={i} className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${
                       dot === 'hit'  ? 'bg-[#22C55E] text-white' :
                       dot === 'miss' ? 'bg-[#EF4444]/20 text-[#EF4444]' :
+                      dot === 'rest' ? 'bg-[var(--c4)] text-[var(--ct2)] opacity-40' :
                                        'bg-[var(--c4)] text-[var(--ct2)]'
                     }`}>
-                      {dot === 'hit' ? '✓' : label}
+                      {dot === 'hit' ? '✓' : dot === 'rest' ? '–' : label}
                     </div>
                   );
                 })}

@@ -123,7 +123,7 @@ export function useAppState() {
     ...pastStats.filter(s => s.date !== today),
     todayStats,
   ];
-  const streak = calculateStreak(allStats, settings.deload.complianceThreshold);
+  const streak = calculateStreak(allStats, settings.deload.complianceThreshold, settings.activeDays);
 
   // ── Mutations ──────────────────────────────────────────────────────────────
   const completeSession = useCallback((

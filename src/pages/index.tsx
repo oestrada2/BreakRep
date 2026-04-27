@@ -96,31 +96,44 @@ export default function Today() {
       </header>
 
       <main className="max-w-lg mx-auto px-4 pt-4 space-y-4">
-        {/* Next session hero */}
-        <NextSessionCard
-          sessions={todaySessions}
-          enabledExercises={enabledExercises}
-          customExerciseLabels={settings.customExerciseLabels}
-          customExerciseTrackingTypes={settings.customExerciseTrackingTypes}
-          targetReps={todayReps}
-          repOverrides={repOverrides}
-          onRepChange={(key, val) => setRepOverrides(prev => ({ ...prev, [key]: val }))}
-        />
+        {/* Rest day card */}
+        {todaySessions.length === 0 && (
+          <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-6 flex flex-col items-center text-center gap-3">
+            <div className="w-14 h-14 rounded-2xl bg-[var(--c4)] flex items-center justify-center text-3xl">🛋️</div>
+            <div>
+              <p className="text-[var(--ct0)] font-semibold text-base">Rest day</p>
+              <p className="text-[var(--ct2)] text-sm mt-1">No sessions scheduled today — enjoy the recovery.</p>
+            </div>
+          </div>
+        )}
 
-        {/* Session timeline */}
-        <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-4">
-          <SessionList
-            sessions={todaySessions}
-            enabledExercises={enabledExercises}
-            customExerciseLabels={settings.customExerciseLabels}
-            targetReps={todayReps}
-            repOverrides={repOverrides}
-            onComplete={completeSession}
-            onUndo={undoSession}
-            onSkip={skipSession}
-            onSnooze={snoozeSession}
-          />
-        </div>
+        {/* Next session hero + session timeline (hidden on rest days) */}
+        {todaySessions.length > 0 && (
+          <>
+            <NextSessionCard
+              sessions={todaySessions}
+              enabledExercises={enabledExercises}
+              customExerciseLabels={settings.customExerciseLabels}
+              customExerciseTrackingTypes={settings.customExerciseTrackingTypes}
+              targetReps={todayReps}
+              repOverrides={repOverrides}
+              onRepChange={(key, val) => setRepOverrides(prev => ({ ...prev, [key]: val }))}
+            />
+            <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-4">
+              <SessionList
+                sessions={todaySessions}
+                enabledExercises={enabledExercises}
+                customExerciseLabels={settings.customExerciseLabels}
+                targetReps={todayReps}
+                repOverrides={repOverrides}
+                onComplete={completeSession}
+                onUndo={undoSession}
+                onSkip={skipSession}
+                onSnooze={snoozeSession}
+              />
+            </div>
+          </>
+        )}
 
         {/* Day progress bar */}
         <DayProgress

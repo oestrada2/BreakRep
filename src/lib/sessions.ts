@@ -16,6 +16,11 @@ export function generateDaySessions(
   existingLogs: Record<string, SessionLog>,
   allStats: DailyStats[]
 ): SessionLog[] {
+  const [y, mo, d] = date.split('-').map(Number);
+  const dow = new Date(y, mo - 1, d).getDay();
+  const activeDays = settings.activeDays ?? [0, 1, 2, 3, 4, 5, 6];
+  if (!activeDays.includes(dow)) return [];
+
   const r = settings.reminders;
   const { reps } = getPlanStatusForDate(date, settings, allStats);
 
