@@ -259,12 +259,10 @@ export default function Logs() {
               return (
                 <div key={key} className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
                   <p className="text-[#F97316] font-bold text-2xl leading-none">
-                    {trackingType === 'time' ? (mins > 0 ? mins : `${total}s`) : total}
+                    {trackingType === 'time' ? (mins > 0 ? mins : `${total}`) : total}
+                    {trackingType === 'time' && <span className="text-sm font-semibold ml-0.5">min</span>}
                   </p>
-                  {trackingType === 'time' && mins > 0 && (
-                    <p className="text-[var(--ct2)] text-[10px] mt-0.5">min</p>
-                  )}
-                  <p className="text-[var(--ct2)] text-xs mt-1.5">{trackingType === 'time' ? '⏱️' : '🏋️'} {label} {trackingType === 'time' ? 'min' : 'reps'}</p>
+                  <p className="text-[var(--ct2)] text-xs mt-1.5">{trackingType === 'time' ? '⏱️' : '🏋️'} {label}</p>
                 </div>
               );
             })}
@@ -316,12 +314,10 @@ export default function Logs() {
               return (
                 <div key={key} className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
                   <p className="text-[#22C55E] font-bold text-2xl leading-none">
-                    {trackingType === 'time' ? (mins > 0 ? mins : `${total}s`) : total}
+                    {trackingType === 'time' ? (mins > 0 ? mins : `${total}`) : total}
+                    {trackingType === 'time' && <span className="text-sm font-semibold ml-0.5">min</span>}
                   </p>
-                  {trackingType === 'time' && mins > 0 && (
-                    <p className="text-[var(--ct2)] text-[10px] mt-0.5">min</p>
-                  )}
-                  <p className="text-[var(--ct2)] text-xs mt-1.5">{trackingType === 'time' ? '⏱️' : '🏋️'} {label} {trackingType === 'time' ? 'min' : 'reps'}</p>
+                  <p className="text-[var(--ct2)] text-xs mt-1.5">{trackingType === 'time' ? '⏱️' : '🏋️'} {label}</p>
                 </div>
               );
             })}
