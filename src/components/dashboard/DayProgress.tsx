@@ -101,7 +101,7 @@ export function DayProgress({ stats, targetReps, enabledExercises, customExercis
                   <p className="text-[#F97316] text-base font-bold">
                     {isTime ? (mins > 0 ? `${mins}m` : `${ex.value}s`) : ex.value}
                   </p>
-                  <p className="text-[var(--ct2)] text-xs">{ex.label}</p>
+                  <p className="text-[var(--ct2)] text-xs">{ex.label} {ex.trackingType === 'time' ? 'min' : 'reps'}</p>
                 </div>
               );
             })}

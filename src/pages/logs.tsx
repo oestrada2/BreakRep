@@ -264,7 +264,7 @@ export default function Logs() {
                   {trackingType === 'time' && mins > 0 && (
                     <p className="text-[var(--ct2)] text-[10px] mt-0.5">min</p>
                   )}
-                  <p className="text-[var(--ct2)] text-xs mt-1.5">{trackingType === 'time' ? '⏱️' : '🏋️'} {label}</p>
+                  <p className="text-[var(--ct2)] text-xs mt-1.5">{trackingType === 'time' ? '⏱️' : '🏋️'} {label} {trackingType === 'time' ? 'min' : 'reps'}</p>
                 </div>
               );
             })}
@@ -321,7 +321,7 @@ export default function Logs() {
                   {trackingType === 'time' && mins > 0 && (
                     <p className="text-[var(--ct2)] text-[10px] mt-0.5">min</p>
                   )}
-                  <p className="text-[var(--ct2)] text-xs mt-1.5">{trackingType === 'time' ? '⏱️' : '🏋️'} {label}</p>
+                  <p className="text-[var(--ct2)] text-xs mt-1.5">{trackingType === 'time' ? '⏱️' : '🏋️'} {label} {trackingType === 'time' ? 'min' : 'reps'}</p>
                 </div>
               );
             })}
