@@ -33,18 +33,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'POST') {
     const { settings, logs } = req.body ?? {};
     const now = new Date().toISOString();
-    const ops: Promise<any>[] = [];
+    const ops: Promise<unknown>[] = [];
 
     if (settings !== undefined) {
       ops.push(
         supabase.from('user_settings')
           .upsert({ user_id: userId, data: settings, updated_at: now }, { onConflict: 'user_id' })
+          .then(r => r)
       );
     }
     if (logs !== undefined) {
       ops.push(
         supabase.from('user_logs')
           .upsert({ user_id: userId, data: logs, updated_at: now }, { onConflict: 'user_id' })
+          .then(r => r)
       );
     }
 
