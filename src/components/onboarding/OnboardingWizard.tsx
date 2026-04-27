@@ -323,7 +323,7 @@ function WorkoutSelectScreen({
             </button>
             <button type="button" onClick={() => { setNewTrackingType('time'); if (inputValue.trim()) { onAddCustom(inputValue.trim(), 'time'); setInputValue(''); setNewTrackingType('reps'); } }}
               className={`px-2.5 py-2 transition-colors ${newTrackingType === 'time' ? 'bg-[var(--ca)] text-white' : 'text-[var(--ct2)]'}`}>
-              Min
+              Time
             </button>
           </div>
           <button
