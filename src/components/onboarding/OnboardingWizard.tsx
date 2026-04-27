@@ -317,11 +317,11 @@ function WorkoutSelectScreen({
             className="flex-1 bg-[var(--c2)] border border-[var(--c5)] rounded-xl px-3 py-2.5 text-sm text-[var(--ct0)] placeholder-[var(--ct2)] focus:outline-none focus:border-[var(--ca)] transition-colors"
           />
           <div className="flex shrink-0 rounded-xl border border-[var(--c5)] overflow-hidden text-xs font-semibold">
-            <button type="button" onClick={() => setNewTrackingType('reps')}
+            <button type="button" onClick={() => { setNewTrackingType('reps'); if (inputValue.trim()) { onAddCustom(inputValue.trim(), 'reps'); setInputValue(''); setNewTrackingType('reps'); } }}
               className={`px-2.5 py-2 transition-colors ${newTrackingType === 'reps' ? 'bg-[var(--ca)] text-white' : 'text-[var(--ct2)]'}`}>
               Reps
             </button>
-            <button type="button" onClick={() => setNewTrackingType('time')}
+            <button type="button" onClick={() => { setNewTrackingType('time'); if (inputValue.trim()) { onAddCustom(inputValue.trim(), 'time'); setInputValue(''); setNewTrackingType('reps'); } }}
               className={`px-2.5 py-2 transition-colors ${newTrackingType === 'time' ? 'bg-[var(--ca)] text-white' : 'text-[var(--ct2)]'}`}>
               Time
             </button>
@@ -340,7 +340,7 @@ function WorkoutSelectScreen({
         <p className="text-[var(--ct2)] text-xs text-center -mt-1">At least one exercise must be selected.</p>
       )}
 
-      <Button variant="primary" size="lg" className="w-full" onClick={onNext}>
+      <Button variant="primary" size="lg" className="w-full" onClick={() => { if (inputValue.trim()) { onAddCustom(inputValue.trim(), newTrackingType); setInputValue(''); setNewTrackingType('reps'); } onNext(); }}>
         Continue
       </Button>
 

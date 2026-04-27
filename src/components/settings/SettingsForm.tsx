@@ -467,54 +467,48 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification, 
             })}
 
             {/* Add custom exercise */}
-            <div className="flex items-center gap-2 pt-1">
-              <input
-                type="text"
-                value={customExInput}
-                onChange={e => setCustomExInput(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && customExInput.trim()) {
-                    const key = `custom_${Date.now()}`;
-                    onChange({
-                      customExerciseLabels: { ...(settings.customExerciseLabels ?? {}), [key]: customExInput.trim() },
-                      enabledExercises: { ...(settings.enabledExercises ?? { pushups: true, squats: true, situps: true }), [key]: true },
-                      customExerciseTrackingTypes: { ...(settings.customExerciseTrackingTypes ?? {}), [key]: customExTrackingType },
-                    });
-                    setCustomExInput('');
-                    setCustomExTrackingType('reps');
-                  }
-                }}
-                placeholder="Add your own exercise…"
-                className="flex-1 bg-[var(--c2)] border border-[var(--c5)] rounded-xl px-3 py-2 text-sm text-[var(--ct0)] placeholder-[var(--ct2)] focus:outline-none focus:border-[var(--ca)] transition-colors"
-              />
-              <div className="flex shrink-0 rounded-xl border border-[var(--c5)] overflow-hidden text-xs font-semibold">
-                <button type="button" onClick={() => setCustomExTrackingType('reps')}
-                  className={`px-2.5 py-2 transition-colors ${customExTrackingType === 'reps' ? 'bg-[var(--ca)] text-white' : 'text-[var(--ct2)]'}`}>
-                  Reps
-                </button>
-                <button type="button" onClick={() => setCustomExTrackingType('time')}
-                  className={`px-2.5 py-2 transition-colors ${customExTrackingType === 'time' ? 'bg-[var(--ca)] text-white' : 'text-[var(--ct2)]'}`}>
-                  Time
-                </button>
-              </div>
-              <button
-                onClick={() => {
-                  if (!customExInput.trim()) return;
-                  const key = `custom_${Date.now()}`;
-                  onChange({
-                    customExerciseLabels: { ...(settings.customExerciseLabels ?? {}), [key]: customExInput.trim() },
-                    enabledExercises: { ...(settings.enabledExercises ?? { pushups: true, squats: true, situps: true }), [key]: true },
-                    customExerciseTrackingTypes: { ...(settings.customExerciseTrackingTypes ?? {}), [key]: customExTrackingType },
-                  });
-                  setCustomExInput('');
-                  setCustomExTrackingType('reps');
-                }}
-                disabled={!customExInput.trim()}
-                className="w-9 h-9 shrink-0 rounded-xl bg-[var(--ca)] flex items-center justify-center transition-opacity disabled:opacity-30"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              </button>
-            </div>
+            {(() => {
+              const addExercise = (trackingType: 'reps' | 'time') => {
+                if (!customExInput.trim()) return;
+                const key = `custom_${Date.now()}`;
+                onChange({
+                  customExerciseLabels: { ...(settings.customExerciseLabels ?? {}), [key]: customExInput.trim() },
+                  enabledExercises: { ...(settings.enabledExercises ?? { pushups: true, squats: true, situps: true }), [key]: true },
+                  customExerciseTrackingTypes: { ...(settings.customExerciseTrackingTypes ?? {}), [key]: trackingType },
+                });
+                setCustomExInput('');
+                setCustomExTrackingType('reps');
+              };
+              return (
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="text"
+                    value={customExInput}
+                    onChange={e => setCustomExInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') addExercise(customExTrackingType); }}
+                    placeholder="Add your own exercise…"
+                    className="flex-1 bg-[var(--c2)] border border-[var(--c5)] rounded-xl px-3 py-2 text-sm text-[var(--ct0)] placeholder-[var(--ct2)] focus:outline-none focus:border-[var(--ca)] transition-colors"
+                  />
+                  <div className="flex shrink-0 rounded-xl border border-[var(--c5)] overflow-hidden text-xs font-semibold">
+                    <button type="button" onClick={() => { setCustomExTrackingType('reps'); addExercise('reps'); }}
+                      className={`px-2.5 py-2 transition-colors ${customExTrackingType === 'reps' ? 'bg-[var(--ca)] text-white' : 'text-[var(--ct2)]'}`}>
+                      Reps
+                    </button>
+                    <button type="button" onClick={() => { setCustomExTrackingType('time'); addExercise('time'); }}
+                      className={`px-2.5 py-2 transition-colors ${customExTrackingType === 'time' ? 'bg-[var(--ca)] text-white' : 'text-[var(--ct2)]'}`}>
+                      Time
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => addExercise(customExTrackingType)}
+                    disabled={!customExInput.trim()}
+                    className="w-9 h-9 shrink-0 rounded-xl bg-[var(--ca)] flex items-center justify-center transition-opacity disabled:opacity-30"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         </div>
 
