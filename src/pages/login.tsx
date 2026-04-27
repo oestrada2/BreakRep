@@ -16,10 +16,14 @@ export default function Login() {
     <div className="min-h-screen bg-[var(--c0)] text-[var(--ct0)] font-sans flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm space-y-8 text-center">
         {/* Logo / brand */}
-        <div>
-          <div className="w-16 h-16 rounded-2xl bg-[#F97316]/10 flex items-center justify-center text-4xl mx-auto mb-4">🏋️</div>
-          <h1 className="text-3xl font-black text-[var(--ct0)]">BreakRep</h1>
-          <p className="text-[var(--ct2)] text-sm mt-1">Your micro-workout companion</p>
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-12 h-12 rounded-2xl bg-[#FACC15] flex items-center justify-center shadow-lg shadow-yellow-500/20">
+              <span className="text-[#0B1C2D] text-2xl font-black leading-none">B</span>
+            </div>
+            <span className="text-[var(--ct0)] text-3xl font-bold tracking-tight">BreakRep</span>
+          </div>
+          <p className="text-[var(--ct2)] text-sm">Your micro-workout companion</p>
         </div>
 
         {/* Sign-in card */}
