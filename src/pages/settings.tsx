@@ -31,7 +31,7 @@ export default function Settings() {
           onChange={partial => updateSettings(partial as Partial<AppSettings>)}
           onReset={() => { resetProgress(); router.push('/'); }}
           onTestNotification={testNotification}
-          onSignOut={() => signOut({ callbackUrl: '/' })}
+          onSignOut={() => signOut({ callbackUrl: '/login' })}
         />
       </main>
       <NavTabs />

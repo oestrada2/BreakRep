@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/router';
+import { useEffect } from 'react';
 import { useAppState } from '@/hooks/useAppState';
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 import { NavTabs } from '@/components/layout/NavTabs';
@@ -27,6 +30,13 @@ function hasExistingData(): boolean {
 }
 
 export default function Today() {
+  const { status: authStatus } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (authStatus === 'unauthenticated') router.replace('/login');
+  }, [authStatus, router]);
+
   const {
     settings, todaySessions, todayStats, allStats,
     completeSession, undoSession, skipSession, snoozeSession,
@@ -35,6 +45,7 @@ export default function Today() {
 
   const [repOverrides, setRepOverrides] = useState<Record<string, number>>({});
 
+  if (authStatus === 'loading' || authStatus === 'unauthenticated') return null;
   if (!initialized) return null;
 
   if (!settings.onboardingComplete) {
