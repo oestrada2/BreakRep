@@ -409,15 +409,22 @@ function ActiveDaysScreen({
           {[
             { label: 'Weekdays only', days: [1, 2, 3, 4, 5] },
             { label: 'Every day',     days: [0, 1, 2, 3, 4, 5, 6] },
-          ].map(({ label, days }) => (
-            <button
-              key={label}
-              onClick={() => onChange(days)}
-              className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[var(--c2)] border border-[var(--c5)] text-[var(--ct2)] hover:border-[var(--ca)]/60 hover:text-[var(--ct1)] transition-colors"
-            >
-              {label}
-            </button>
-          ))}
+          ].map(({ label, days }) => {
+            const isActive = activeDays.length === days.length && days.every(d => activeDays.includes(d));
+            return (
+              <button
+                key={label}
+                onClick={() => onChange(days)}
+                className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+                  isActive
+                    ? 'bg-[var(--c2)] border-2 border-[#FACC15] text-[#FACC15]'
+                    : 'bg-[var(--c2)] border border-[var(--c5)] text-[var(--ct2)] hover:border-[var(--ca)]/60 hover:text-[var(--ct1)]'
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
 
         <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-4 flex items-start gap-3">
