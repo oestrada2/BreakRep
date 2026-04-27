@@ -9,6 +9,7 @@ interface SettingsFormProps {
   onChange: (partial: Partial<AppSettings>) => void;
   onReset: () => void;
   onTestNotification: () => void;
+  onSignOut?: () => void;
 }
 
 // ── Primitive components ────────────────────────────────────────────────────
@@ -162,7 +163,7 @@ function loadProfile(): Profile {
 
 // ── Main component ──────────────────────────────────────────────────────────
 
-export function SettingsForm({ settings, onChange, onReset, onTestNotification }: SettingsFormProps) {
+export function SettingsForm({ settings, onChange, onReset, onTestNotification, onSignOut }: SettingsFormProps) {
   const { progression: p, reminders: r } = settings;
   const { theme, setTheme } = useTheme();
   const { data: session } = useSession();
@@ -874,7 +875,10 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification }
         title="Account"
         subtitle="Sign out and data management"
       >
-        <button className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[var(--c4)] hover:bg-[var(--c4)]/50 transition-colors text-left">
+        <button
+          onClick={onSignOut}
+          className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[var(--c4)] hover:bg-[var(--c4)]/50 transition-colors text-left"
+        >
           <p className="text-[var(--ct0)] text-sm">Sign out</p>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ct2)" strokeWidth="2.5" strokeLinecap="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>

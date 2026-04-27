@@ -3,6 +3,7 @@ import { NavTabs } from '@/components/layout/NavTabs';
 import { SettingsForm } from '@/components/settings/SettingsForm';
 import type { AppSettings } from '@/types';
 import { useRouter } from 'next/router';
+import { signOut } from 'next-auth/react';
 
 export default function Settings() {
   const router = useRouter();
@@ -30,6 +31,7 @@ export default function Settings() {
           onChange={partial => updateSettings(partial as Partial<AppSettings>)}
           onReset={() => { resetProgress(); router.push('/'); }}
           onTestNotification={testNotification}
+          onSignOut={() => signOut({ callbackUrl: '/' })}
         />
       </main>
       <NavTabs />
