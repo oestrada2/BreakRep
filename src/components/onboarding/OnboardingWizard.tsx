@@ -1305,8 +1305,8 @@ function ProfileScreen({ onFinish, onBack, onTeamCreated, onTeamJoined }: {
             </label>
           </div>
           <label className="block">
-            <span className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide">Display name</span>
-            <p className="text-[var(--ct2)] text-xs mt-0.5 mb-1.5">This is how you'll appear to teammates — feel free to use a nickname or whatever fits you best.</p>
+            <span className="text-[var(--ct1)] text-xs font-medium uppercase tracking-wide">Nickname</span>
+            <p className="text-[var(--ct2)] text-xs mt-0.5 mb-1.5">This is how you'll appear to teammates — feel free to use whatever fits you best.</p>
             <input type="text" placeholder="How you appear to teammates" value={name} onChange={e => setName(e.target.value)}
               className={`w-full bg-[var(--c4)] text-[var(--ct0)] placeholder-[var(--ct2)] rounded-xl px-4 py-3 border outline-none text-sm transition-colors focus:border-[#FACC15] ${touched && !name.trim() ? 'border-[#EF4444]' : 'border-[var(--c5)]'}`} />
           </label>
@@ -1392,7 +1392,7 @@ function ProfileScreen({ onFinish, onBack, onTeamCreated, onTeamJoined }: {
         </div>
 
         {touched && !canProceed && (
-          <p className="text-[#EF4444] text-xs text-center -mt-1">Please enter your first name and display name to continue.</p>
+          <p className="text-[#EF4444] text-xs text-center -mt-1">Please enter your first name and nickname to continue.</p>
         )}
         <Button variant="primary" size="lg" className="w-full" onClick={() => {
           setTouched(true);
