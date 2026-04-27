@@ -83,17 +83,15 @@ export default function Today() {
           <div>
             <h1 className="text-[var(--ct0)] text-xl font-bold">{greeting}</h1>
             <p className="text-[var(--ct2)] text-xs mt-0.5">
-              {todayIsRestDay ? 'Rest day — no sessions scheduled' : `${todayStats.completed}/${todayStats.totalSessions} sessions done · ${todayReps} reps target`}
+              {todayStats.completed}/{todayStats.totalSessions} sessions done · {todayReps} reps target
             </p>
           </div>
-          {!todayIsRestDay && (
-            <span
-              className="text-xs font-semibold px-2.5 py-1 rounded-full"
-              style={{ color: plan.color, background: `${plan.color}18` }}
-            >
-              {plan.label}
-            </span>
-          )}
+          <span
+            className="text-xs font-semibold px-2.5 py-1 rounded-full"
+            style={{ color: plan.color, background: `${plan.color}18` }}
+          >
+            {plan.label}
+          </span>
         </div>
       </header>
 
@@ -137,16 +135,14 @@ export default function Today() {
           </>
         )}
 
-        {/* Day progress bar — hidden on rest days */}
-        {!todayIsRestDay && (
-          <DayProgress
-            stats={todayStats}
-            targetReps={todayReps}
-            enabledExercises={enabledExercises}
-            customExerciseLabels={settings.customExerciseLabels}
-            customExerciseTrackingTypes={settings.customExerciseTrackingTypes}
-          />
-        )}
+        {/* Day progress bar */}
+        <DayProgress
+          stats={todayStats}
+          targetReps={todayReps}
+          enabledExercises={enabledExercises}
+          customExerciseLabels={settings.customExerciseLabels}
+          customExerciseTrackingTypes={settings.customExerciseTrackingTypes}
+        />
       </main>
 
       <NavTabs />
