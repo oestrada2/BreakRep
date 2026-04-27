@@ -123,7 +123,7 @@ function WelcomeScreen({ onNext, onLogin, isReturningUser }: {
           </button>
         )}
       </div>
-      <StepDots total={7} current={0} />
+      <StepDots total={8} current={0} />
     </Screen>
   );
 }
@@ -157,7 +157,7 @@ function HowItWorksScreen({ onNext, onSkip }: { onNext: () => void; onSkip: () =
         <Button variant="primary" size="lg" className="w-full" onClick={onNext}>Continue</Button>
         <button onClick={onSkip} className="text-[var(--ct1)] text-sm text-center hover:text-[var(--ct0)] transition-colors">Skip for now</button>
       </div>
-      <StepDots total={7} current={1} />
+      <StepDots total={8} current={1} />
     </Screen>
   );
 }
@@ -344,12 +344,100 @@ function WorkoutSelectScreen({
         Continue
       </Button>
 
-      <StepDots total={7} current={2} />
+      <StepDots total={8} current={2} />
     </Screen>
   );
 }
 
-// ─── Screen 3a: Starting point choice ────────────────────────────────────────
+// ─── Screen 3: Active days ───────────────────────────────────────────────────
+function ActiveDaysScreen({
+  activeDays,
+  onChange,
+  onNext,
+  onBack,
+}: {
+  activeDays: number[];
+  onChange: (days: number[]) => void;
+  onNext: () => void;
+  onBack: () => void;
+}) {
+  const SHORT  = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  return (
+    <Screen>
+      <Logo />
+      <div>
+        <button onClick={onBack} className="flex items-center gap-1.5 text-[var(--ct2)] text-xs hover:text-[var(--ct1)] transition-colors mb-3">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Back
+        </button>
+        <h2 className="text-[var(--ct0)] text-2xl font-bold mb-1">Your active days</h2>
+        <p className="text-[var(--ct1)] text-sm leading-relaxed">
+          Sessions are only scheduled on active days. Rest days are skipped automatically.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex gap-1.5">
+          {LABELS.map((label, i) => {
+            const on = activeDays.includes(i);
+            return (
+              <button
+                key={i}
+                title={label}
+                onClick={() => {
+                  if (on && activeDays.length === 1) return;
+                  const next = on
+                    ? activeDays.filter(d => d !== i)
+                    : [...activeDays, i].sort((a, b) => a - b);
+                  onChange(next);
+                }}
+                className={`flex-1 py-3 rounded-xl text-xs font-bold transition-colors ${
+                  on
+                    ? 'bg-[#FACC15] text-[#0B1C2D]'
+                    : 'bg-[var(--c2)] border border-[var(--c5)] text-[var(--ct2)]'
+                }`}
+              >
+                {SHORT[i]}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex gap-2">
+          {[
+            { label: 'Weekdays only', days: [1, 2, 3, 4, 5] },
+            { label: 'Every day',     days: [0, 1, 2, 3, 4, 5, 6] },
+          ].map(({ label, days }) => (
+            <button
+              key={label}
+              onClick={() => onChange(days)}
+              className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[var(--c2)] border border-[var(--c5)] text-[var(--ct2)] hover:border-[var(--ca)]/60 hover:text-[var(--ct1)] transition-colors"
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-4 flex items-start gap-3">
+          <span className="text-xl shrink-0">💡</span>
+          <p className="text-[var(--ct1)] text-xs leading-relaxed">
+            Rest days don't count toward your streak or stats — you can always change this in Settings later.
+          </p>
+        </div>
+      </div>
+
+      <Button variant="primary" size="lg" className="w-full" onClick={onNext}>
+        Continue
+      </Button>
+
+      <StepDots total={8} current={3} />
+    </Screen>
+  );
+}
+
+// ─── Screen 4a: Starting point choice ────────────────────────────────────────
 function StartingPointScreen({
   onAssessment,
   onManual,
@@ -406,7 +494,7 @@ function StartingPointScreen({
         </button>
       </div>
 
-      <StepDots total={7} current={3} />
+      <StepDots total={8} current={4} />
     </Screen>
   );
 }
@@ -465,7 +553,7 @@ function AssessmentRepsScreen({
         Next
       </Button>
 
-      <StepDots total={7} current={3} />
+      <StepDots total={8} current={4} />
     </Screen>
   );
 }
@@ -527,7 +615,7 @@ function AssessmentResultScreen({
         Start with {m.label}
       </Button>
 
-      <StepDots total={7} current={3} />
+      <StepDots total={8} current={4} />
     </Screen>
   );
 }
@@ -598,7 +686,7 @@ function ManualLevelScreen({
         <p className="text-[var(--ct2)] text-xs text-center">You can change this later in Settings.</p>
       </div>
 
-      <StepDots total={7} current={3} />
+      <StepDots total={8} current={4} />
     </Screen>
   );
 }
@@ -639,7 +727,7 @@ function NotificationsScreen({ onNext, onSkip, onBack }: { onNext: () => void; o
         <Button variant="primary" size="lg" className="w-full" onClick={handleEnable}>Enable Notifications</Button>
         <button onClick={onSkip} className="text-[var(--ct1)] text-sm text-center hover:text-[var(--ct0)] transition-colors">Maybe Later</button>
       </div>
-      <StepDots total={7} current={4} />
+      <StepDots total={8} current={5} />
     </Screen>
   );
 }
@@ -734,7 +822,7 @@ function SignInScreen({ onNext, onBack }: { onNext: () => void; onBack: () => vo
             Sign in
           </button>
         </p>
-        <StepDots total={7} current={5} />
+        <StepDots total={8} current={6} />
       </Screen>
     );
   }
@@ -780,7 +868,7 @@ function SignInScreen({ onNext, onBack }: { onNext: () => void; onBack: () => vo
           Continue with Email
         </button>
       </div>
-      <StepDots total={7} current={5} />
+      <StepDots total={8} current={6} />
     </Screen>
   );
 }
@@ -1303,7 +1391,7 @@ function ProfileScreen({ onFinish, onBack, onTeamCreated, onTeamJoined }: {
           setTouched(true);
           if (canProceed) onFinish(name, firstName, lastName);
         }}>Let's go →</Button>
-        <StepDots total={7} current={6} />
+        <StepDots total={8} current={7} />
       </Screen>
 
       {showTeamSheet && (
@@ -1337,7 +1425,7 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
     if (status === 'authenticated') {
       const params = new URLSearchParams(window.location.search);
       if (params.get('onboarding') === '1') {
-        setStep(6);
+        setStep(7);
         window.history.replaceState({}, '', '/');
       }
     }
@@ -1366,6 +1454,7 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
     } catch {}
     return {};
   });
+  const [activeDays, setActiveDays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [createdTeamName, setCreatedTeamName] = useState('');
   const [createdTeamCode, setCreatedTeamCode] = useState('');
   const [createdTeamOrg,  setCreatedTeamOrg]  = useState('');
@@ -1452,6 +1541,7 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
 
     onComplete({
       experienceLevel: fitnessLevel,
+      activeDays,
       enabledExercises,
       customExerciseLabels,
       customExerciseTrackingTypes,
@@ -1487,14 +1577,26 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
     );
   }
 
-  // Step 3 is the branching fitness step — render sub-screens inline
+  // Step 3: active days
   if (step === 3) {
+    return (
+      <ActiveDaysScreen
+        activeDays={activeDays}
+        onChange={setActiveDays}
+        onNext={() => { setSubStep('choice'); setStep(4); }}
+        onBack={() => setStep(2)}
+      />
+    );
+  }
+
+  // Step 4 is the branching fitness step — render sub-screens inline
+  if (step === 4) {
     if (subStep === 'choice') {
       return (
         <StartingPointScreen
           onAssessment={() => setSubStep('assess-reps')}
           onManual={() => setSubStep('manual')}
-          onBack={() => setStep(2)}
+          onBack={() => setStep(3)}
         />
       );
     }
@@ -1515,7 +1617,7 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
         <AssessmentResultScreen
           reps={assessReps}
           level={fitnessLevel}
-          onNext={() => setStep(4)}
+          onNext={() => setStep(5)}
           onBack={() => setSubStep('assess-reps')}
         />
       );
@@ -1525,7 +1627,7 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
         <ManualLevelScreen
           selected={fitnessLevel}
           onSelect={setFitnessLevel}
-          onNext={() => setStep(4)}
+          onNext={() => setStep(5)}
           onBack={() => setSubStep('choice')}
         />
       );
@@ -1546,9 +1648,9 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
         />
       )}
       {step === 1 && <HowItWorksScreen    onNext={() => setStep(2)} onSkip={() => setStep(2)} />}
-      {step === 4 && <NotificationsScreen onNext={() => setStep(5)} onSkip={() => setStep(5)} onBack={() => setStep(3)} />}
-      {step === 5 && <SignInScreen        onNext={() => setStep(6)} onBack={() => setStep(4)} />}
-      {step === 6 && <ProfileScreen onFinish={(dn, fn, ln) => finish(dn, fn, ln)} onBack={() => setStep(5)} onTeamCreated={(name, code, org) => { setCreatedTeamName(name); setCreatedTeamCode(code); setCreatedTeamOrg(org); }} onTeamJoined={team => setJoinedTeam(team)} />}
+      {step === 5 && <NotificationsScreen onNext={() => setStep(6)} onSkip={() => setStep(6)} onBack={() => setStep(4)} />}
+      {step === 6 && <SignInScreen        onNext={() => setStep(7)} onBack={() => setStep(5)} />}
+      {step === 7 && <ProfileScreen onFinish={(dn, fn, ln) => finish(dn, fn, ln)} onBack={() => setStep(6)} onTeamCreated={(name, code, org) => { setCreatedTeamName(name); setCreatedTeamCode(code); setCreatedTeamOrg(org); }} onTeamJoined={team => setJoinedTeam(team)} />}
     </>
   );
 }

@@ -187,7 +187,11 @@ export function useAppState() {
   }, [todaySessionsResolved, settings.reminders.snoozeMinutes]);
 
   const updateSettings = useCallback((partial: Partial<AppSettings>) => {
-    setSettingsState(prev => ({ ...prev, ...partial }));
+    setSettingsState(prev => {
+      const next = { ...prev, ...partial };
+      saveSettings(next);
+      return next;
+    });
   }, []);
 
   const resetProgress = useCallback(() => {
