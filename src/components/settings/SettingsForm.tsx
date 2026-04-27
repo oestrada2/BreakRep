@@ -429,7 +429,7 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification, 
                       <button type="button"
                         onClick={() => onChange({ customExerciseTrackingTypes: { ...(settings.customExerciseTrackingTypes ?? {}), [key]: 'time' } })}
                         className={`px-2 py-1 transition-colors ${trackingType === 'time' ? 'bg-[var(--ca)] text-white' : 'text-[var(--ct2)]'}`}>
-                        Time
+                        Min
                       </button>
                     </div>
                     <div

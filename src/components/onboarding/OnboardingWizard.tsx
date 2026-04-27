@@ -278,7 +278,7 @@ function WorkoutSelectScreen({
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[var(--ct0)] text-sm font-bold">{customLabels[key]}</p>
-                    <p className="text-[var(--ct2)] text-xs mt-0.5">{trackingType === 'time' ? 'Timed exercise (seconds)' : 'Rep-based exercise'}</p>
+                    <p className="text-[var(--ct2)] text-xs mt-0.5">{trackingType === 'time' ? 'Time-based (minutes)' : 'Rep-based exercise'}</p>
                   </div>
                 </button>
                 <div className="flex items-center gap-2 shrink-0">
@@ -323,7 +323,7 @@ function WorkoutSelectScreen({
             </button>
             <button type="button" onClick={() => { setNewTrackingType('time'); if (inputValue.trim()) { onAddCustom(inputValue.trim(), 'time'); setInputValue(''); setNewTrackingType('reps'); } }}
               className={`px-2.5 py-2 transition-colors ${newTrackingType === 'time' ? 'bg-[var(--ca)] text-white' : 'text-[var(--ct2)]'}`}>
-              Time
+              Min
             </button>
           </div>
           <button

@@ -255,11 +255,10 @@ export default function Logs() {
             )}
             {activeCustomExercises.map(({ key, label, trackingType }) => {
               const total = thisWeekCustomStats[key] ?? 0;
-              const mins  = Math.round(total / 60);
               return (
                 <div key={key} className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
                   <p className="text-[#F97316] font-bold text-2xl leading-none">
-                    {trackingType === 'time' ? (mins > 0 ? mins : `${total}`) : total}
+                    {total}
                     {trackingType === 'time' && <span className="text-sm font-semibold ml-0.5">min</span>}
                   </p>
                   <p className="text-[var(--ct2)] text-xs mt-1.5">{trackingType === 'time' ? '⏱️' : '🏋️'} {label}</p>
@@ -310,11 +309,10 @@ export default function Logs() {
             </div>
             {activeCustomExercises.map(({ key, label, trackingType }) => {
               const total = allTimeCustomStats[key] ?? 0;
-              const mins  = Math.round(total / 60);
               return (
                 <div key={key} className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
                   <p className="text-[#22C55E] font-bold text-2xl leading-none">
-                    {trackingType === 'time' ? (mins > 0 ? mins : `${total}`) : total}
+                    {total}
                     {trackingType === 'time' && <span className="text-sm font-semibold ml-0.5">min</span>}
                   </p>
                   <p className="text-[var(--ct2)] text-xs mt-1.5">{trackingType === 'time' ? '⏱️' : '🏋️'} {label}</p>

@@ -170,7 +170,7 @@ export function NextSessionCard({ sessions, enabledExercises, customExerciseLabe
                   className="w-8 h-8 flex items-center justify-center text-[var(--ct2)] hover:text-[var(--ct0)] font-bold transition-colors"
                 >+</button>
               </div>
-              <span className="text-[var(--ct2)] text-xs w-7">{ex.trackingType === 'time' ? 'sec' : 'reps'}</span>
+              <span className="text-[var(--ct2)] text-xs w-7">{ex.trackingType === 'time' ? 'min' : 'reps'}</span>
             </div>
           ))}
         </div>

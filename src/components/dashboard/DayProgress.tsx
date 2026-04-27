@@ -99,7 +99,7 @@ export function DayProgress({ stats, targetReps, enabledExercises, customExercis
               return (
                 <div key={ex.key} className="text-center">
                   <p className="text-[#F97316] text-base font-bold">
-                    {isTime ? (mins > 0 ? mins : ex.value) : ex.value}
+                    {ex.value}
                     {isTime && <span className="text-xs font-semibold ml-0.5">min</span>}
                   </p>
                   <p className="text-[var(--ct2)] text-xs">{ex.label}</p>
