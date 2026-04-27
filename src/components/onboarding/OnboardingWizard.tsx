@@ -1590,55 +1590,22 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
       <ActiveDaysScreen
         activeDays={activeDays}
         onChange={setActiveDays}
-        onNext={() => { setSubStep('choice'); setStep(4); }}
+        onNext={() => setStep(4)}
         onBack={() => setStep(2)}
       />
     );
   }
 
-  // Step 4 is the branching fitness step — render sub-screens inline
+  // Step 4: fitness level
   if (step === 4) {
-    if (subStep === 'choice') {
-      return (
-        <StartingPointScreen
-          onAssessment={() => setSubStep('assess-reps')}
-          onManual={() => setSubStep('manual')}
-          onBack={() => setStep(3)}
-        />
-      );
-    }
-    if (subStep === 'assess-reps') {
-      return (
-        <AssessmentRepsScreen
-          onNext={reps => {
-            setAssessReps(reps);
-            setFitnessLevel(calcLevelFromReps(reps));
-            setSubStep('assess-result');
-          }}
-          onBack={() => setSubStep('choice')}
-        />
-      );
-    }
-    if (subStep === 'assess-result') {
-      return (
-        <AssessmentResultScreen
-          reps={assessReps}
-          level={fitnessLevel}
-          onNext={() => setStep(5)}
-          onBack={() => setSubStep('assess-reps')}
-        />
-      );
-    }
-    if (subStep === 'manual') {
-      return (
-        <ManualLevelScreen
-          selected={fitnessLevel}
-          onSelect={setFitnessLevel}
-          onNext={() => setStep(5)}
-          onBack={() => setSubStep('choice')}
-        />
-      );
-    }
+    return (
+      <ManualLevelScreen
+        selected={fitnessLevel}
+        onSelect={setFitnessLevel}
+        onNext={() => setStep(5)}
+        onBack={() => setStep(3)}
+      />
+    );
   }
 
   const handleLogin = () => {
