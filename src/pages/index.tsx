@@ -40,7 +40,7 @@ export default function Today() {
   const {
     settings, todaySessions, todayStats, allStats,
     completeSession, undoSession, skipSession, snoozeSession,
-    updateSettings, initialized,
+    updateSettings, initialized, todayIsRestDay,
   } = useAppState();
 
   const [repOverrides, setRepOverrides] = useState<Record<string, number>>({});
@@ -97,7 +97,7 @@ export default function Today() {
 
       <main className="max-w-lg mx-auto px-4 pt-4 space-y-4">
         {/* Rest day card */}
-        {todaySessions.length === 0 && (
+        {todayIsRestDay && (
           <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-6 flex flex-col items-center text-center gap-3">
             <div className="w-14 h-14 rounded-2xl bg-[var(--c4)] flex items-center justify-center text-3xl">🛋️</div>
             <div>
@@ -108,7 +108,7 @@ export default function Today() {
         )}
 
         {/* Next session hero + session timeline (hidden on rest days) */}
-        {todaySessions.length > 0 && (
+        {!todayIsRestDay && (
           <>
             <NextSessionCard
               sessions={todaySessions}

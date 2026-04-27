@@ -83,7 +83,9 @@ export function useAppState() {
 
 
   // ── Derived helpers ────────────────────────────────────────────────────────
-  const today = new Date().toISOString().split('T')[0];
+  // Use local date (not UTC) so day-of-week checks match the user's calendar.
+  const _now = new Date();
+  const today = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`;
 
   const activeDays = settings.activeDays ?? [0, 1, 2, 3, 4, 5, 6];
   const isActiveDay = (dateStr: string) => {
@@ -132,6 +134,7 @@ export function useAppState() {
     ...(isActiveDay(today) ? [todayStats] : []),
   ];
   const streak = calculateStreak(allStats, settings.deload.complianceThreshold, settings.activeDays);
+  const todayIsRestDay = !isActiveDay(today);
 
   // ── Mutations ──────────────────────────────────────────────────────────────
   const completeSession = useCallback((
@@ -250,6 +253,7 @@ export function useAppState() {
     todayStats,
     allStats,
     streak,
+    todayIsRestDay,
     initialized,
     completeSession,
     undoSession,
