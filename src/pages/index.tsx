@@ -40,13 +40,13 @@ export default function Today() {
   const {
     settings, todaySessions, todayStats, allStats,
     completeSession, undoSession, skipSession, snoozeSession,
-    updateSettings, initialized, todayIsRestDay,
+    updateSettings, initialized, cloudSynced, todayIsRestDay,
   } = useAppState();
 
   const [repOverrides, setRepOverrides] = useState<Record<string, number>>({});
 
   if (authStatus === 'loading' || authStatus === 'unauthenticated') return null;
-  if (!initialized) return null;
+  if (!initialized || !cloudSynced) return null;
 
   if (!settings.onboardingComplete) {
     return (

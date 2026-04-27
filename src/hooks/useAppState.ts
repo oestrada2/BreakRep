@@ -41,8 +41,9 @@ export function useAppState() {
   const [settings, setSettingsState] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [logs, setLogsState] = useState<Record<string, SessionLog>>({});
   const [initialized, setInitialized] = useState(false);
+  const [cloudSynced, setCloudSynced] = useState(false);
 
-  // ── Bootstrap ──────────────────────────────────────────────────────────────
+  // ── Bootstrap: load localStorage first, then overlay cloud data ───────────
   useEffect(() => {
     const savedSettings = loadSettings() as AppSettings | null;
     const savedLogs = loadLogs() as Record<string, SessionLog> | null;
@@ -72,7 +73,30 @@ export function useAppState() {
     setInitialized(true);
   }, []);
 
-  // ── Persist on change ──────────────────────────────────────────────────────
+  // ── Cloud fetch: overlay Supabase data on top of localStorage ─────────────
+  useEffect(() => {
+    if (!initialized) return;
+    const timeout = setTimeout(() => setCloudSynced(true), 5_000);
+    fetch('/api/sync')
+      .then(r => r.ok ? r.json() : null)
+      .then(cloud => {
+        if (!cloud) return;
+        if (cloud.settings) {
+          const merged = { ...DEFAULT_SETTINGS, ...cloud.settings };
+          setSettingsState(merged);
+          saveSettings(merged);
+        }
+        if (cloud.logs) {
+          setLogsState(cloud.logs);
+          saveLogs(cloud.logs);
+        }
+      })
+      .catch(() => {})
+      .finally(() => { clearTimeout(timeout); setCloudSynced(true); });
+    return () => clearTimeout(timeout);
+  }, [initialized]);
+
+  // ── Persist to localStorage immediately on every change ───────────────────
   useEffect(() => {
     if (initialized) saveSettings(settings);
   }, [settings, initialized]);
@@ -80,6 +104,31 @@ export function useAppState() {
   useEffect(() => {
     if (initialized) saveLogs(logs);
   }, [logs, initialized]);
+
+  // ── Debounced write to Supabase (1.5 s after last change) ─────────────────
+  useEffect(() => {
+    if (!initialized || !cloudSynced) return;
+    const t = setTimeout(() => {
+      fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings }),
+      }).catch(() => {});
+    }, 1_500);
+    return () => clearTimeout(t);
+  }, [settings, initialized, cloudSynced]);
+
+  useEffect(() => {
+    if (!initialized || !cloudSynced) return;
+    const t = setTimeout(() => {
+      fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logs }),
+      }).catch(() => {});
+    }, 1_500);
+    return () => clearTimeout(t);
+  }, [logs, initialized, cloudSynced]);
 
 
   // ── Derived helpers ────────────────────────────────────────────────────────
@@ -259,6 +308,7 @@ export function useAppState() {
     streak,
     todayIsRestDay,
     initialized,
+    cloudSynced,
     completeSession,
     undoSession,
     skipSession,
