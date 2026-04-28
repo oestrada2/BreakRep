@@ -275,7 +275,7 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification, 
               <input
                 type="date"
                 min={new Date().toISOString().split('T')[0]}
-                className="flex-1 bg-[var(--c4)] border border-[var(--ca)]/40 rounded-xl px-3 py-1.5 text-[var(--ct0)] text-xs font-semibold focus:outline-none focus:border-[var(--ca)] transition-colors"
+                className="flex-1 bg-[var(--c4)] border border-[var(--ca)]/40 rounded-xl px-3 py-1.5 text-[var(--ct0)] text-xs font-semibold focus:outline-none focus:border-[var(--ca)] transition-colors [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:scale-150 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-80"
                 onChange={e => {
                   if (e.target.value) {
                     onChange({ pausedUntil: e.target.value });
