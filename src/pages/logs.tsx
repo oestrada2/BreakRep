@@ -3,6 +3,7 @@ import { useAppState } from '@/hooks/useAppState';
 import { NavTabs } from '@/components/layout/NavTabs';
 import { WeekStrip } from '@/components/history/WeekStrip';
 import { CalendarView } from '@/components/history/CalendarView';
+import { DayCard } from '@/components/history/DayCard';
 import { BadgeGrid } from '@/components/badges/BadgeGrid';
 
 function toLocalISO(d: Date) {
@@ -174,11 +175,44 @@ export default function Logs() {
 
         {/* ── Calendar view ── */}
         {view === 'calendar' && (
-          <CalendarView
-            statsMap={statsMap}
-            selectedDate={selectedDate}
-            onSelect={date => setSelectedDate(date)}
-          />
+          <>
+            <CalendarView
+              statsMap={statsMap}
+              selectedDate={selectedDate}
+              onSelect={date => setSelectedDate(date)}
+            />
+
+            {/* Selected day detail */}
+            {(() => {
+              const dayLogs = Object.values(logs)
+                .filter(s => s.date === selectedDate)
+                .sort((a, b) => a.scheduledHour - b.scheduledHour || (a.scheduledMinute ?? 0) - (b.scheduledMinute ?? 0));
+              const dayStats = statsMap[selectedDate] ?? null;
+              const [y, mo, d] = selectedDate.split('-').map(Number);
+              const label = new Date(y, mo - 1, d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+              return (
+                <div>
+                  <p className="text-[var(--ct2)] text-[10px] font-bold uppercase tracking-widest mb-2">{label}</p>
+                  {dayLogs.length > 0 ? (
+                    <DayCard
+                      date={selectedDate}
+                      sessions={dayLogs}
+                      stats={dayStats}
+                      filterStatus="all"
+                      enabledExercises={enabledEx}
+                      customExerciseLabels={customLabels}
+                      customExerciseTrackingTypes={settings.customExerciseTrackingTypes}
+                    />
+                  ) : (
+                    <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-5 text-center">
+                      <p className="text-[var(--ct2)] text-sm">No sessions logged for this day</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </>
         )}
 
         {/* ── Streak hero ── */}
