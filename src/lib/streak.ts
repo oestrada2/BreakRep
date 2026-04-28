@@ -11,7 +11,8 @@ function toISO(d: Date): string {
 export function calculateStreak(
   stats: DailyStats[],
   threshold: number = 0.6,
-  activeDays: number[] = [0, 1, 2, 3, 4, 5, 6]
+  activeDays: number[] = [0, 1, 2, 3, 4, 5, 6],
+  pausedUntil?: string
 ): number {
   if (activeDays.length === 0) return 0;
 
@@ -25,6 +26,12 @@ export function calculateStreak(
     const dow = cur.getDay();
 
     if (!activeDays.includes(dow)) {
+      cur.setDate(cur.getDate() - 1);
+      continue;
+    }
+
+    // Paused days don't break the streak
+    if (pausedUntil && dateStr <= pausedUntil) {
       cur.setDate(cur.getDate() - 1);
       continue;
     }

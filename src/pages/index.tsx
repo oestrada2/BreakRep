@@ -40,7 +40,7 @@ export default function Today() {
   const {
     settings, todaySessions, todayStats, allStats,
     completeSession, undoSession, skipSession, snoozeSession,
-    updateSettings, initialized, cloudSynced, todayIsRestDay,
+    updateSettings, initialized, cloudSynced, todayIsRestDay, todayIsPaused,
   } = useAppState();
 
   const [repOverrides, setRepOverrides] = useState<Record<string, number>>({});
@@ -96,8 +96,21 @@ export default function Today() {
       </header>
 
       <main className="max-w-lg mx-auto px-4 pt-4 space-y-4">
+        {/* Pause banner */}
+        {todayIsPaused && (
+          <div className="bg-[#1A1A0D] border border-[#FACC15]/40 rounded-2xl p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-[#FACC15]/10 flex items-center justify-center text-2xl shrink-0">🏖️</div>
+            <div>
+              <p className="text-[#FACC15] font-semibold text-sm">Vacation mode on</p>
+              <p className="text-[var(--ct2)] text-xs mt-0.5">
+                Sessions paused until {settings.pausedUntil} — your streak is safe.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Rest day card */}
-        {todayIsRestDay && (
+        {todayIsRestDay && !todayIsPaused && (
           <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-6 flex flex-col items-center text-center gap-3">
             <div className="w-14 h-14 rounded-2xl bg-[var(--c4)] flex items-center justify-center text-3xl">🛋️</div>
             <div>
@@ -107,8 +120,8 @@ export default function Today() {
           </div>
         )}
 
-        {/* Next session hero + session timeline (hidden on rest days) */}
-        {!todayIsRestDay && (
+        {/* Next session hero + session timeline (hidden on rest/pause days) */}
+        {!todayIsRestDay && !todayIsPaused && (
           <>
             <NextSessionCard
               sessions={todaySessions}

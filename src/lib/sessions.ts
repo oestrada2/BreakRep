@@ -20,6 +20,7 @@ export function generateDaySessions(
   const dow = new Date(y, mo - 1, d).getDay();
   const activeDays = settings.activeDays ?? [0, 1, 2, 3, 4, 5, 6];
   if (!activeDays.includes(dow)) return [];
+  if (settings.pausedUntil && date <= settings.pausedUntil) return [];
 
   const r = settings.reminders;
   const { reps } = getPlanStatusForDate(date, settings, allStats);

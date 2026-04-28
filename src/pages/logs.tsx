@@ -93,14 +93,29 @@ export default function Logs() {
     lastWeekStats.reduce((n, s) => n + s.squatReps, 0),
   [lastWeekStats]);
 
+  const lastWeekCustomStats = useMemo(() => {
+    const result: Record<string, number> = {};
+    lastWeekStats.forEach(s => {
+      Object.entries(s.customExerciseStats ?? {}).forEach(([key, val]) => {
+        result[key] = (result[key] ?? 0) + val;
+      });
+    });
+    return result;
+  }, [lastWeekStats]);
+
   // ── All-time ───────────────────────────────────────────────────────────────
   const allTimePushupReps = useMemo(() => allStats.reduce((n, s) => n + s.pushupReps, 0),  [allStats]);
   const allTimeSquatReps  = useMemo(() => allStats.reduce((n, s) => n + s.squatReps, 0),   [allStats]);
   const allTimeSitupReps  = useMemo(() => allStats.reduce((n, s) => n + s.situpReps, 0),   [allStats]);
 
   const bestDay = useMemo(() =>
-    Math.max(0, ...allStats.map(s => s.totalReps)),
-  [allStats]);
+    Math.max(0, ...allStats.map(s => {
+      const customRepsTotal = Object.entries(s.customExerciseStats ?? {})
+        .filter(([key]) => (settings.customExerciseTrackingTypes?.[key] ?? 'reps') === 'reps')
+        .reduce((sum, [, val]) => sum + val, 0);
+      return s.totalReps + customRepsTotal;
+    })),
+  [allStats, settings.customExerciseTrackingTypes]);
 
   const consistency = useMemo(() =>
     allStats.length
@@ -255,12 +270,19 @@ export default function Logs() {
             )}
             {activeCustomExercises.map(({ key, label, trackingType }) => {
               const total = thisWeekCustomStats[key] ?? 0;
+              const lastTotal = lastWeekCustomStats[key] ?? 0;
+              const delta = total - lastTotal;
               return (
                 <div key={key} className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-3.5 text-center">
                   <p className="text-[#F97316] font-bold text-2xl leading-none">
                     {total}
                     {trackingType === 'time' && <span className="text-sm font-semibold ml-0.5">min</span>}
                   </p>
+                  {lastTotal > 0 && (
+                    <p className={`text-[10px] font-semibold mt-0.5 ${delta >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+                      {delta >= 0 ? '↑' : '↓'} {Math.abs(delta)} vs last week
+                    </p>
+                  )}
                   <p className="text-[var(--ct2)] text-xs mt-1.5">{trackingType === 'time' ? '⏱️' : '🏋️'} {label}</p>
                 </div>
               );

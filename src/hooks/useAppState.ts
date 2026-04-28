@@ -182,8 +182,9 @@ export function useAppState() {
     ...pastStats.filter(s => s.date !== today),
     ...(isActiveDay(today) ? [todayStats] : []),
   ];
-  const streak = calculateStreak(allStats, settings.deload.complianceThreshold, settings.activeDays);
+  const streak = calculateStreak(allStats, settings.deload.complianceThreshold, settings.activeDays, settings.pausedUntil);
   const todayIsRestDay = !isActiveDay(today);
+  const todayIsPaused = !!(settings.pausedUntil && today <= settings.pausedUntil);
 
   // ── Mutations ──────────────────────────────────────────────────────────────
   const completeSession = useCallback((
@@ -276,7 +277,16 @@ export function useAppState() {
           fired.add(s.id);
           const granted = await NotificationService.requestPermission();
           if (granted) {
-            new Notification('💪 Push-up time!', { body: `Time for push-ups: do ${s.targetReps} reps` });
+            const enabledEx = settings.enabledExercises ?? { pushups: true, squats: true };
+            const exerciseNames: string[] = [];
+            if (enabledEx.pushups) exerciseNames.push(settings.customExerciseLabels?.['pushups'] ?? 'push-ups');
+            if (enabledEx.squats) exerciseNames.push(settings.customExerciseLabels?.['squats'] ?? 'squats');
+            if (enabledEx.situps) exerciseNames.push(settings.customExerciseLabels?.['situps'] ?? 'plank');
+            Object.entries(settings.customExerciseLabels ?? {}).forEach(([key, label]) => {
+              if (key.startsWith('custom_') && enabledEx[key] !== false) exerciseNames.push(label);
+            });
+            const exText = exerciseNames.length > 0 ? exerciseNames.join(', ') : 'exercises';
+            new Notification('💪 Break time!', { body: `Time for ${exText} — ${s.targetReps} reps` });
           }
           NotificationService.triggerAlert(settings.reminders.alertStyle ?? 'sound', settings.reminders.notificationSound);
         }
@@ -292,12 +302,18 @@ export function useAppState() {
   const testNotification = useCallback(async () => {
     const current = todaySessionsResolved.find(s => s.status === 'pending');
     const reps = current?.targetReps ?? settings.progression.startingReps;
-    await NotificationService.sendImmediate(
-      '💪 Push-up time!',
-      `Time for push-ups: do ${reps} reps`
-    );
+    const enabledEx = settings.enabledExercises ?? { pushups: true, squats: true };
+    const exerciseNames: string[] = [];
+    if (enabledEx.pushups) exerciseNames.push(settings.customExerciseLabels?.['pushups'] ?? 'push-ups');
+    if (enabledEx.squats) exerciseNames.push(settings.customExerciseLabels?.['squats'] ?? 'squats');
+    if (enabledEx.situps) exerciseNames.push(settings.customExerciseLabels?.['situps'] ?? 'plank');
+    Object.entries(settings.customExerciseLabels ?? {}).forEach(([key, label]) => {
+      if (key.startsWith('custom_') && enabledEx[key] !== false) exerciseNames.push(label);
+    });
+    const exText = exerciseNames.length > 0 ? exerciseNames.join(', ') : 'exercises';
+    await NotificationService.sendImmediate('💪 Break time!', `Time for ${exText} — ${reps} reps`);
     NotificationService.triggerAlert(settings.reminders.alertStyle ?? 'sound', settings.reminders.notificationSound);
-  }, [todaySessionsResolved, settings.progression.startingReps, settings.reminders.alertStyle]);
+  }, [todaySessionsResolved, settings.progression.startingReps, settings.reminders.alertStyle, settings.enabledExercises, settings.customExerciseLabels]);
 
   return {
     settings,
@@ -307,6 +323,7 @@ export function useAppState() {
     allStats,
     streak,
     todayIsRestDay,
+    todayIsPaused,
     initialized,
     cloudSynced,
     completeSession,

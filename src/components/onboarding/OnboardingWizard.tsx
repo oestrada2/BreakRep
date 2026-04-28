@@ -730,6 +730,12 @@ function NotificationsScreen({ onNext, onSkip, onBack }: { onNext: () => void; o
           <span className="ml-auto text-[var(--ct1)] text-xs">now</span>
         </div>
       </div>
+      <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-xl px-4 py-3 flex items-start gap-2.5">
+        <span className="text-base mt-0.5">📅</span>
+        <p className="text-[var(--ct2)] text-xs leading-relaxed">
+          By default, reminders fire <span className="text-[var(--ct1)] font-semibold">once per hour</span> between your active hours. You can switch to a custom schedule (e.g. only at :15 and :45 past each hour) in <span className="text-[var(--ct1)] font-semibold">Settings → Schedule</span> after setup.
+        </p>
+      </div>
       <div className="flex flex-col gap-3">
         <Button variant="primary" size="lg" className="w-full" onClick={handleEnable}>Enable Notifications</Button>
         <button onClick={onSkip} className="text-[var(--ct1)] text-sm text-center hover:text-[var(--ct0)] transition-colors">Maybe Later</button>

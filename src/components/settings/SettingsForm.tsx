@@ -180,6 +180,8 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification, 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [customExInput, setCustomExInput] = useState('');
   const [customExTrackingType, setCustomExTrackingType] = useState<'reps' | 'time'>('reps');
+  const [editingCustomKey, setEditingCustomKey] = useState<string | null>(null);
+  const [editingCustomLabel, setEditingCustomLabel] = useState('');
 
   useEffect(() => {
     const saved = loadProfile();
@@ -212,8 +214,49 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification, 
 
   const teams: Team[] = settings.teams ?? [];
 
+  const isPaused = !!(settings.pausedUntil && new Date().toISOString().split('T')[0] <= settings.pausedUntil);
+
+  function pauseUntil(days: number) {
+    const d = new Date();
+    d.setDate(d.getDate() + days - 1);
+    const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    onChange({ pausedUntil: iso });
+  }
+
   return (
     <div className="space-y-3 pb-6">
+
+      {/* ── Vacation / Pause ─────────────────────────────────────────────────── */}
+      <div className={`rounded-2xl border p-4 ${isPaused ? 'bg-[#1A1A0D] border-[#FACC15]/40' : 'bg-[var(--c2)] border-[var(--c5)]'}`}>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="text-[var(--ct0)] text-sm font-semibold">Vacation / Pause</p>
+            <p className="text-[var(--ct2)] text-xs mt-0.5">
+              {isPaused
+                ? `Paused until ${settings.pausedUntil} — streak protected`
+                : 'Pause sessions without breaking your streak'}
+            </p>
+          </div>
+          {isPaused && (
+            <span className="text-[10px] font-bold bg-[#FACC15]/20 text-[#FACC15] px-2 py-0.5 rounded-full">PAUSED</span>
+          )}
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {isPaused ? (
+            <button
+              onClick={() => onChange({ pausedUntil: undefined })}
+              className="px-3 py-1.5 rounded-xl bg-[#22C55E] text-[#09090B] text-xs font-bold transition-colors"
+            >Resume now</button>
+          ) : (
+            <>
+              <button onClick={() => pauseUntil(1)} className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold">Today</button>
+              <button onClick={() => pauseUntil(3)} className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold">3 days</button>
+              <button onClick={() => pauseUntil(7)} className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold">1 week</button>
+              <button onClick={() => pauseUntil(14)} className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold">2 weeks</button>
+            </>
+          )}
+        </div>
+      </div>
 
       {/* ── 1. Profile ──────────────────────────────────────────────────────── */}
       <AccordionSection
@@ -408,16 +451,31 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification, 
                     enabled ? 'bg-[var(--c4)] border-[#FACC15]/40' : 'bg-[var(--c2)] border-[var(--c5)] opacity-50'
                   }`}
                 >
-                  <button
-                    onClick={() => {
-                      if (enabled && enabledCount === 1) return;
-                      onChange({ enabledExercises: { ...enabledEx, [key]: !enabled } });
-                    }}
-                    className="flex items-center gap-3 flex-1 min-w-0 text-left"
-                  >
-                    <span className="text-lg">{trackingType === 'time' ? '⏱️' : '🏋️'}</span>
-                    <span className="flex-1 text-sm text-[var(--ct0)] truncate">{label}</span>
-                  </button>
+                  <span className="text-lg shrink-0">{trackingType === 'time' ? '⏱️' : '🏋️'}</span>
+                  {editingCustomKey === key ? (
+                    <input
+                      autoFocus
+                      className="flex-1 bg-transparent text-sm text-[var(--ct0)] outline-none border-b border-[#FACC15] min-w-0"
+                      value={editingCustomLabel}
+                      onChange={e => setEditingCustomLabel(e.target.value)}
+                      onBlur={() => {
+                        const trimmed = editingCustomLabel.trim();
+                        if (trimmed) onChange({ customExerciseLabels: { ...(settings.customExerciseLabels ?? {}), [key]: trimmed } });
+                        setEditingCustomKey(null);
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                        if (e.key === 'Escape') { setEditingCustomKey(null); }
+                      }}
+                    />
+                  ) : (
+                    <button
+                      onClick={() => { setEditingCustomKey(key); setEditingCustomLabel(label); }}
+                      className="flex-1 text-sm text-[var(--ct0)] truncate text-left hover:text-[#FACC15] transition-colors"
+                    >
+                      {label}
+                    </button>
+                  )}
                   <div className="flex items-center gap-2 shrink-0">
                     {/* Reps / Time toggle */}
                     <div className="flex rounded-lg border border-[var(--c5)] overflow-hidden text-[10px] font-semibold">
@@ -635,7 +693,12 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification, 
                         const next = selected
                           ? (r.customMinutes ?? []).filter(m => m !== min)
                           : [...(r.customMinutes ?? []), min].sort((a, b) => a - b);
-                        onChange({ reminders: { ...r, customMinutes: next } });
+                        // Auto-revert to Every Hour if all marks are cleared
+                        if (next.length === 0) {
+                          onChange({ reminders: { ...r, scheduleMode: 'auto', customMinutes: [] } });
+                        } else {
+                          onChange({ reminders: { ...r, customMinutes: next } });
+                        }
                       }}
                       className={`w-11 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                         selected

@@ -82,6 +82,7 @@ export interface AppSettings {
   /** @deprecated migrated to teams[] */
   teamMembers?: TeamMember[];
   activeDays?: number[];          // 0=Sun,1=Mon,...,6=Sat; undefined = all days
+  pausedUntil?: string;          // ISO date YYYY-MM-DD; sessions paused through this date
   startDate: string;             // ISO date string YYYY-MM-DD
   onboardingComplete: boolean;
 }
