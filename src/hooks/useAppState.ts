@@ -5,6 +5,8 @@ import { generateDaySessions, markPastSessionsMissed, sessionFireTime } from '@/
 import { computeDayStats } from '@/lib/compliance';
 import { calculateStreak } from '@/lib/streak';
 import { NotificationService, buildNotifications } from '@/lib/notifications';
+import { evaluateBadges } from '@/lib/badges';
+import type { EarnedBadge } from '@/types';
 
 const DEFAULT_SETTINGS: AppSettings = {
   progression: {
@@ -42,6 +44,7 @@ export function useAppState() {
   const [logs, setLogsState] = useState<Record<string, SessionLog>>({});
   const [initialized, setInitialized] = useState(false);
   const [cloudSynced, setCloudSynced] = useState(false);
+  const [newlyEarnedBadges, setNewlyEarnedBadges] = useState<EarnedBadge[]>([]);
 
   // ── Bootstrap: load localStorage first, then overlay cloud data ───────────
   useEffect(() => {
@@ -212,7 +215,28 @@ export function useAppState() {
         updatedAt: new Date().toISOString(),
       },
     }));
-  }, [todaySessionsResolved]);
+
+    // Check for newly earned badges after a slight delay so stats have updated
+    setTimeout(() => {
+      setSettingsState(prev => {
+        const newIds = evaluateBadges({
+          allStats,
+          todayStats,
+          streak,
+          earnedBadges: prev.earnedBadges ?? [],
+          prevReps: todaySessionsResolved.find(s => s.id === id)?.targetReps ?? 0,
+          currentReps: todaySessionsResolved.find(s => s.id === id)?.targetReps ?? 0,
+        });
+        if (newIds.length === 0) return prev;
+        const today = new Date().toISOString().split('T')[0];
+        const newBadges: EarnedBadge[] = newIds.map(bid => ({ id: bid, earnedAt: today }));
+        setNewlyEarnedBadges(newBadges);
+        const next = { ...prev, earnedBadges: [...(prev.earnedBadges ?? []), ...newBadges] };
+        saveSettings(next);
+        return next;
+      });
+    }, 300);
+  }, [todaySessionsResolved, allStats, todayStats, streak]);
 
   const undoSession = useCallback((id: string) => {
     setLogsState(prev => {
@@ -249,6 +273,8 @@ export function useAppState() {
       return next;
     });
   }, []);
+
+  const dismissBadges = useCallback(() => setNewlyEarnedBadges([]), []);
 
   const resetProgress = useCallback(() => {
     setLogsState({});
@@ -340,5 +366,7 @@ export function useAppState() {
     resetProgress,
     scheduleNotifications,
     testNotification,
+    newlyEarnedBadges,
+    dismissBadges,
   };
 }

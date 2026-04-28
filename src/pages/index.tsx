@@ -8,6 +8,7 @@ import { NavTabs } from '@/components/layout/NavTabs';
 import { NextSessionCard } from '@/components/dashboard/NextSessionCard';
 import { DayProgress } from '@/components/dashboard/DayProgress';
 import { SessionList } from '@/components/dashboard/SessionList';
+import { BadgeCelebration } from '@/components/badges/BadgeCelebration';
 import { getPlanStatusForDate } from '@/lib/compliance';
 import type { AppSettings } from '@/types';
 
@@ -41,6 +42,7 @@ export default function Today() {
     settings, todaySessions, todayStats, allStats,
     completeSession, undoSession, skipSession, snoozeSession,
     updateSettings, initialized, cloudSynced, todayIsRestDay, todayIsPaused,
+    newlyEarnedBadges, dismissBadges,
   } = useAppState();
 
   const [repOverrides, setRepOverrides] = useState<Record<string, number>>({});
@@ -165,6 +167,7 @@ export default function Today() {
       </main>
 
       <NavTabs />
+      <BadgeCelebration badges={newlyEarnedBadges} onDismiss={dismissBadges} />
     </div>
   );
 }

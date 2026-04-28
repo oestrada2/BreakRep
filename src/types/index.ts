@@ -64,6 +64,11 @@ export interface Team {
   joinedAt: number;
 }
 
+export interface EarnedBadge {
+  id: string;
+  earnedAt: string; // ISO date YYYY-MM-DD
+}
+
 export interface AppSettings {
   progression: ProgressionSettings;
   reminders: ReminderSettings;
@@ -83,6 +88,7 @@ export interface AppSettings {
   teamMembers?: TeamMember[];
   activeDays?: number[];          // 0=Sun,1=Mon,...,6=Sat; undefined = all days
   pausedUntil?: string;          // ISO date YYYY-MM-DD; sessions paused through this date
+  earnedBadges?: EarnedBadge[];
   startDate: string;             // ISO date string YYYY-MM-DD
   onboardingComplete: boolean;
 }

@@ -3,6 +3,7 @@ import { useAppState } from '@/hooks/useAppState';
 import { NavTabs } from '@/components/layout/NavTabs';
 import { WeekStrip } from '@/components/history/WeekStrip';
 import { CalendarView } from '@/components/history/CalendarView';
+import { BadgeGrid } from '@/components/badges/BadgeGrid';
 
 function toLocalISO(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -342,6 +343,11 @@ export default function Logs() {
               );
             })}
           </div>
+        </div>
+
+        {/* ── Badges ── */}
+        <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-4">
+          <BadgeGrid earnedBadges={settings.earnedBadges ?? []} />
         </div>
 
       </main>
