@@ -256,6 +256,28 @@ export default function Logs() {
           )}
         </div>
 
+        {/* ── Selected day detail (week view) ── */}
+        {view === 'week' && (() => {
+          const dayLogs = Object.values(logs)
+            .filter(s => s.date === selectedDate)
+            .sort((a, b) => a.scheduledHour - b.scheduledHour || (a.scheduledMinute ?? 0) - (b.scheduledMinute ?? 0));
+          const dayStats = statsMap[selectedDate] ?? null;
+          if (dayLogs.length === 0) return null;
+          return (
+            <DayCard
+              key={selectedDate}
+              date={selectedDate}
+              sessions={dayLogs}
+              stats={dayStats}
+              filterStatus="all"
+              enabledExercises={enabledEx}
+              customExerciseLabels={customLabels}
+              customExerciseTrackingTypes={settings.customExerciseTrackingTypes}
+              collapsible
+            />
+          );
+        })()}
+
         {/* ── This week ── */}
         <div>
           <p className="text-[var(--ct2)] text-[10px] font-bold uppercase tracking-widest mb-2">This week</p>
