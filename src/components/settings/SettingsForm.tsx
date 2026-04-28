@@ -249,10 +249,22 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification, 
             >Resume now</button>
           ) : (
             <>
-              <button onClick={() => pauseUntil(1)} className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold">Today</button>
-              <button onClick={() => pauseUntil(3)} className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold">3 days</button>
-              <button onClick={() => pauseUntil(7)} className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold">1 week</button>
+              <button onClick={() => pauseUntil(1)}  className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold">Today</button>
+              <button onClick={() => pauseUntil(3)}  className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold">3 days</button>
+              <button onClick={() => pauseUntil(7)}  className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold">1 week</button>
               <button onClick={() => pauseUntil(14)} className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold">2 weeks</button>
+              {/* Custom date picker */}
+              <label className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold cursor-pointer hover:border-[var(--ca)]/40 transition-colors">
+                Custom
+                <input
+                  type="date"
+                  min={new Date().toISOString().split('T')[0]}
+                  className="sr-only"
+                  onChange={e => {
+                    if (e.target.value) onChange({ pausedUntil: e.target.value });
+                  }}
+                />
+              </label>
             </>
           )}
         </div>
