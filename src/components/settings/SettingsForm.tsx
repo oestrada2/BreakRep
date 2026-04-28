@@ -182,6 +182,7 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification, 
   const [customExTrackingType, setCustomExTrackingType] = useState<'reps' | 'time'>('reps');
   const [editingCustomKey, setEditingCustomKey] = useState<string | null>(null);
   const [editingCustomLabel, setEditingCustomLabel] = useState('');
+  const [showCustomPause, setShowCustomPause] = useState(false);
 
   useEffect(() => {
     const saved = loadProfile();
@@ -241,31 +242,53 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification, 
             <span className="text-[10px] font-bold bg-[#FACC15]/20 text-[#FACC15] px-2 py-0.5 rounded-full">PAUSED</span>
           )}
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {isPaused ? (
-            <button
-              onClick={() => onChange({ pausedUntil: undefined })}
-              className="px-3 py-1.5 rounded-xl bg-[#22C55E] text-[#09090B] text-xs font-bold transition-colors"
-            >Resume now</button>
-          ) : (
-            <>
-              <button onClick={() => pauseUntil(1)}  className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold">Today</button>
-              <button onClick={() => pauseUntil(3)}  className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold">3 days</button>
-              <button onClick={() => pauseUntil(7)}  className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold">1 week</button>
-              <button onClick={() => pauseUntil(14)} className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold">2 weeks</button>
-              {/* Custom date picker */}
-              <label className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold cursor-pointer hover:border-[var(--ca)]/40 transition-colors">
-                Custom
-                <input
-                  type="date"
-                  min={new Date().toISOString().split('T')[0]}
-                  className="sr-only"
-                  onChange={e => {
-                    if (e.target.value) onChange({ pausedUntil: e.target.value });
-                  }}
-                />
-              </label>
-            </>
+        <div className="space-y-2.5">
+          <div className="flex gap-2 flex-wrap">
+            {isPaused ? (
+              <button
+                type="button"
+                onClick={() => { onChange({ pausedUntil: undefined }); setShowCustomPause(false); }}
+                className="px-3 py-1.5 rounded-xl bg-[#22C55E] text-[#09090B] text-xs font-bold transition-colors"
+              >Resume now</button>
+            ) : (
+              <>
+                <button type="button" onClick={() => { pauseUntil(1);  setShowCustomPause(false); }} className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold hover:border-[var(--ca)]/40 transition-colors">Today</button>
+                <button type="button" onClick={() => { pauseUntil(3);  setShowCustomPause(false); }} className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold hover:border-[var(--ca)]/40 transition-colors">3 days</button>
+                <button type="button" onClick={() => { pauseUntil(7);  setShowCustomPause(false); }} className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold hover:border-[var(--ca)]/40 transition-colors">1 week</button>
+                <button type="button" onClick={() => { pauseUntil(14); setShowCustomPause(false); }} className="px-3 py-1.5 rounded-xl bg-[var(--c4)] border border-[var(--c5)] text-[var(--ct1)] text-xs font-semibold hover:border-[var(--ca)]/40 transition-colors">2 weeks</button>
+                <button
+                  type="button"
+                  onClick={() => setShowCustomPause(v => !v)}
+                  className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-colors ${
+                    showCustomPause
+                      ? 'bg-[var(--ca)]/20 border-[var(--ca)] text-[var(--ca)]'
+                      : 'bg-[var(--c4)] border-[var(--c5)] text-[var(--ct1)] hover:border-[var(--ca)]/40'
+                  }`}
+                >Custom date</button>
+              </>
+            )}
+          </div>
+
+          {/* Inline custom date input — shown when Custom date is tapped */}
+          {showCustomPause && !isPaused && (
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                min={new Date().toISOString().split('T')[0]}
+                className="flex-1 bg-[var(--c4)] border border-[var(--ca)]/40 rounded-xl px-3 py-1.5 text-[var(--ct0)] text-xs font-semibold focus:outline-none focus:border-[var(--ca)] transition-colors"
+                onChange={e => {
+                  if (e.target.value) {
+                    onChange({ pausedUntil: e.target.value });
+                    setShowCustomPause(false);
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowCustomPause(false)}
+                className="text-[var(--ct2)] text-xs px-2 py-1.5 hover:text-[var(--ct0)] transition-colors"
+              >Cancel</button>
+            </div>
           )}
         </div>
       </div>
