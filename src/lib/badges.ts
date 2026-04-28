@@ -43,7 +43,7 @@ export const ALL_BADGES: BadgeDef[] = [
 
   // ── Social ─────────────────────────────────────────────────────────────────
   { id: 'team_player',  name: 'Team Player',  emoji: '🤝', description: 'Join a team',                           category: 'social' },
-  { id: 'pack_leader',  name: 'Pack Leader',  emoji: '🏁', description: 'Finish #1 on your team leaderboard for a week', category: 'social' },
+  { id: 'pack_leader',  name: 'Pack Leader',  emoji: '🦁', description: 'Finish #1 on your team leaderboard for a week', category: 'social' },
 ];
 
 export function getBadgeDef(id: string): BadgeDef | undefined {
