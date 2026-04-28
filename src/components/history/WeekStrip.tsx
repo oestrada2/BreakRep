@@ -94,11 +94,10 @@ export function WeekStrip({ selectedDate, statsMap, onSelect }: WeekStripProps) 
             : rate >= 0.3 ? '#FACC15'
             : '#EF4444';
 
-          const glowStyle = !noActivity && !isFuture && rate >= 0.6
-            ? { boxShadow: `0 0 0 2px #22C55E, 0 0 14px 4px rgba(34,197,94,0.5)` }
-            : ringColor
-            ? { boxShadow: `0 0 0 2px ${ringColor}` }
-            : {};
+          const bgColor = ringColor === '#22C55E' ? 'rgba(34,197,94,0.15)'
+            : ringColor === '#FACC15' ? 'rgba(250,204,21,0.1)'
+            : ringColor === '#EF4444' ? 'rgba(239,68,68,0.1)'
+            : undefined;
 
           return (
             <button
@@ -114,14 +113,14 @@ export function WeekStrip({ selectedDate, statsMap, onSelect }: WeekStripProps) 
                   ? 'border-transparent bg-[var(--c2)] opacity-30'
                   : 'border-transparent bg-[var(--c2)] hover:bg-[var(--c4)]'
               }`}
-              style={!isSelected ? glowStyle : {}}
+              style={!isSelected && ringColor ? { borderColor: ringColor, background: bgColor } : {}}
             >
               <span className={`text-xs font-medium ${isSelected ? 'text-[#09090B]' : 'text-[var(--ct2)]'}`}>
                 {day.label}
               </span>
               <span className={`text-sm font-bold ${
-                isSelected  ? 'text-[#09090B]'
-                : isToday   ? 'text-[var(--ca)]'
+                isSelected ? 'text-[#09090B]'
+                : isToday  ? 'text-[var(--ca)]'
                 : ringColor ? 'text-[var(--ct0)]'
                 : 'text-[var(--ct2)]'
               }`}>
