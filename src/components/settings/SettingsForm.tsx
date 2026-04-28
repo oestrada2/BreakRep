@@ -8,6 +8,7 @@ interface SettingsFormProps {
   settings: AppSettings;
   onChange: (partial: Partial<AppSettings>) => void;
   onReset: () => void;
+  onDeleteAccount: () => void;
   onTestNotification: () => void;
   onSignOut?: () => void;
 }
@@ -163,7 +164,7 @@ function loadProfile(): Profile {
 
 // ── Main component ──────────────────────────────────────────────────────────
 
-export function SettingsForm({ settings, onChange, onReset, onTestNotification, onSignOut }: SettingsFormProps) {
+export function SettingsForm({ settings, onChange, onReset, onDeleteAccount, onTestNotification, onSignOut }: SettingsFormProps) {
   const { progression: p, reminders: r } = settings;
   const { theme, setTheme } = useTheme();
   const { data: session } = useSession();
@@ -1061,7 +1062,7 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification, 
               <p className="text-[var(--ct2)] text-xs">All your data will be permanently erased. This action cannot be undone.</p>
               <div className="flex gap-2 pt-1">
                 <button
-                  onClick={() => { onReset(); setConfirmDelete(false); }}
+                  onClick={() => { onDeleteAccount(); setConfirmDelete(false); }}
                   className="flex-1 py-2 rounded-xl bg-[#EF4444] text-white text-sm font-bold hover:bg-[#DC2626] transition-colors"
                 >Yes, delete account</button>
                 <button

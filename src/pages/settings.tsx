@@ -30,6 +30,11 @@ export default function Settings() {
           settings={settings}
           onChange={partial => updateSettings(partial as Partial<AppSettings>)}
           onReset={() => { resetProgress(); router.push('/'); }}
+          onDeleteAccount={async () => {
+            await fetch('/api/delete-account', { method: 'DELETE' }).catch(() => {});
+            resetProgress();
+            signOut({ callbackUrl: '/login' });
+          }}
           onTestNotification={testNotification}
           onSignOut={() => signOut({ callbackUrl: '/login' })}
         />
