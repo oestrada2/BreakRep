@@ -215,7 +215,13 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification, 
 
   const teams: Team[] = settings.teams ?? [];
 
-  const isPaused = !!(settings.pausedUntil && new Date().toISOString().split('T')[0] <= settings.pausedUntil);
+  // Use local date (not UTC) to match how pausedUntil is stored
+  const todayLocal = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  })();
+
+  const isPaused = !!(settings.pausedUntil && todayLocal <= settings.pausedUntil);
 
   function pauseUntil(days: number) {
     const d = new Date();
@@ -235,6 +241,8 @@ export function SettingsForm({ settings, onChange, onReset, onTestNotification, 
             <p className="text-[var(--ct2)] text-xs mt-0.5">
               {isPaused
                 ? `Paused until ${settings.pausedUntil} — streak protected`
+                : settings.pausedUntil
+                ? `Resuming after ${settings.pausedUntil}`
                 : 'Pause sessions without breaking your streak'}
             </p>
           </div>
