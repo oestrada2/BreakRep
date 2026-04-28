@@ -196,6 +196,7 @@ export default function Logs() {
                   <p className="text-[var(--ct2)] text-[10px] font-bold uppercase tracking-widest mb-2">{label}</p>
                   {dayLogs.length > 0 ? (
                     <DayCard
+                      key={selectedDate}
                       date={selectedDate}
                       sessions={dayLogs}
                       stats={dayStats}
@@ -203,6 +204,7 @@ export default function Logs() {
                       enabledExercises={enabledEx}
                       customExerciseLabels={customLabels}
                       customExerciseTrackingTypes={settings.customExerciseTrackingTypes}
+                      collapsible
                     />
                   ) : (
                     <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-5 text-center">
