@@ -69,11 +69,20 @@ export function DayCard({ date, sessions, stats, filterStatus, enabledExercises,
           {stats && (
             <p className="text-[var(--ct2)] text-xs mt-0.5">
               {stats.completed}/{stats.totalSessions} sessions
-              {(stats.totalReps > 0 || stats.situpReps > 0) && ` · ${[
-                stats.pushupReps > 0 ? `💪 ${stats.pushupReps} ${pushupLabel.toLowerCase()}` : null,
-                stats.squatReps  > 0 ? `🦵 ${stats.squatReps} ${squatLabel.toLowerCase()}`   : null,
-                stats.situpReps  > 0 ? `⏱️ ${stats.situpReps}s ${plankLabel.toLowerCase()}`  : null,
-              ].filter(Boolean).join(' · ')}`}
+              {(() => {
+                const parts: string[] = [];
+                if (stats.pushupReps > 0) parts.push(`💪 ${stats.pushupReps} ${pushupLabel.toLowerCase()}`);
+                if (stats.squatReps  > 0) parts.push(`🦵 ${stats.squatReps} ${squatLabel.toLowerCase()}`);
+                if (stats.situpReps  > 0) parts.push(`⏱️ ${stats.situpReps}s ${plankLabel.toLowerCase()}`);
+                Object.entries(stats.customExerciseStats ?? {}).forEach(([key, val]) => {
+                  if (val > 0) {
+                    const label = customExerciseLabels?.[key] ?? key;
+                    const isTime = (customExerciseTrackingTypes?.[key] ?? 'reps') === 'time';
+                    parts.push(`${isTime ? '⏱️' : '🏋️'} ${val}${isTime ? ' min' : ' reps'} ${label.toLowerCase()}`);
+                  }
+                });
+                return parts.length > 0 ? ` · ${parts.join(' · ')}` : '';
+              })()}
             </p>
           )}
         </div>
