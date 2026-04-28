@@ -12,7 +12,6 @@ export const ALL_BADGES: BadgeDef[] = [
   // ── Milestone ──────────────────────────────────────────────────────────────
   { id: 'first_session', name: 'First Step',    emoji: '👟', description: 'Complete your very first session',              category: 'milestone' },
   { id: 'level_up',      name: 'Level Up',      emoji: '📈', description: 'Your rep target increases for the first time',  category: 'milestone' },
-  { id: 'comeback',      name: 'Comeback',      emoji: '💥', description: 'Complete a session after missing 3+ days',      category: 'milestone' },
 
   // ── Streak ─────────────────────────────────────────────────────────────────
   { id: 'streak_3',   name: 'Hat Trick',    emoji: '🔥', description: '3-day streak',    category: 'streak' },
@@ -106,15 +105,6 @@ export function evaluateBadges(input: BadgeEvalInput): string[] {
 
   if (prevReps > 0 && currentReps > prevReps) earn('level_up');
 
-  // Comeback: today has completions AND there's a gap of 3+ missed days before today
-  const sortedDates = [...allStats].sort((a, b) => a.date.localeCompare(b.date));
-  const todayIdx = sortedDates.findIndex(s => s.date === today);
-  if (todayStats.completed > 0 && todayIdx >= 3) {
-    const recentMissed = sortedDates
-      .slice(Math.max(0, todayIdx - 5), todayIdx)
-      .filter(s => s.complianceRate < 0.3);
-    if (recentMissed.length >= 3) earn('comeback');
-  }
 
   // ── Streak ─────────────────────────────────────────────────────────────────
   if (streak >= 3)   earn('streak_3');
