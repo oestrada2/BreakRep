@@ -110,7 +110,7 @@ export function DayCard({ date, sessions, stats, filterStatus, enabledExercises,
           className="w-full bg-[var(--c2)] border border-[var(--c5)] rounded-2xl px-4 py-4 flex items-center justify-between hover:border-[var(--ca)]/40 transition-colors"
         >
           <span className="text-[var(--ct1)] text-sm">
-            View all {filtered.length} session{filtered.length !== 1 ? 's' : ''}
+            View all {filtered.length} session{filtered.length !== 1 ? 's' : ''} · {formatDateLabel(date)}
           </span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="text-[var(--ct2)]">
             <polyline points="6 9 12 15 18 9"/>
