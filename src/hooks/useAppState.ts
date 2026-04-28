@@ -82,9 +82,14 @@ export function useAppState() {
       .then(cloud => {
         if (!cloud) return;
         if (cloud.settings) {
-          const merged = { ...DEFAULT_SETTINGS, ...cloud.settings };
-          setSettingsState(merged);
-          saveSettings(merged);
+          // Don't overwrite settings if the user made a local change in the last 30 seconds
+          const lastLocalChange = parseInt(localStorage.getItem('puh_local_update') ?? '0', 10);
+          const secondsSinceLocalChange = (Date.now() - lastLocalChange) / 1000;
+          if (secondsSinceLocalChange > 30) {
+            const merged = { ...DEFAULT_SETTINGS, ...cloud.settings };
+            setSettingsState(merged);
+            saveSettings(merged);
+          }
         }
         if (cloud.logs) {
           setLogsState(cloud.logs);
@@ -237,6 +242,7 @@ export function useAppState() {
   }, [todaySessionsResolved, settings.reminders.snoozeMinutes]);
 
   const updateSettings = useCallback((partial: Partial<AppSettings>) => {
+    localStorage.setItem('puh_local_update', String(Date.now()));
     setSettingsState(prev => {
       const next = { ...prev, ...partial };
       saveSettings(next);
