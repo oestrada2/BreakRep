@@ -10,6 +10,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   streak:      'Streaks',
   volume:      'Volume',
   consistency: 'Consistency',
+  social:      'Social',
 };
 
 export function BadgeGrid({ earnedBadges }: BadgeGridProps) {
@@ -17,7 +18,7 @@ export function BadgeGrid({ earnedBadges }: BadgeGridProps) {
   const totalEarned = earnedBadges.length;
   const total = ALL_BADGES.length;
 
-  const categories = ['milestone', 'streak', 'volume', 'consistency'] as const;
+  const categories = ['milestone', 'streak', 'volume', 'consistency', 'social'] as const;
 
   return (
     <div className="space-y-5">

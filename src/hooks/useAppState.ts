@@ -219,13 +219,16 @@ export function useAppState() {
     // Check for newly earned badges after a slight delay so stats have updated
     setTimeout(() => {
       setSettingsState(prev => {
+        const completedSession = todaySessionsResolved.find(s => s.id === id);
         const newIds = evaluateBadges({
           allStats,
           todayStats,
           streak,
           earnedBadges: prev.earnedBadges ?? [],
-          prevReps: todaySessionsResolved.find(s => s.id === id)?.targetReps ?? 0,
-          currentReps: todaySessionsResolved.find(s => s.id === id)?.targetReps ?? 0,
+          prevReps: completedSession?.targetReps ?? 0,
+          currentReps: completedSession?.targetReps ?? 0,
+          completedSessionHour: completedSession?.scheduledHour,
+          settings: prev,
         });
         if (newIds.length === 0) return prev;
         const today = new Date().toISOString().split('T')[0];
