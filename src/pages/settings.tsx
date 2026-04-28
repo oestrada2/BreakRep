@@ -33,7 +33,7 @@ export default function Settings() {
           onDeleteAccount={async () => {
             await fetch('/api/delete-account', { method: 'DELETE' }).catch(() => {});
             resetProgress();
-            signOut({ callbackUrl: '/login' });
+            router.push('/');
           }}
           onTestNotification={testNotification}
           onSignOut={() => signOut({ callbackUrl: '/login' })}
