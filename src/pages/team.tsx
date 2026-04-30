@@ -841,19 +841,20 @@ export default function TeamPage() {
   const weekSessions = useMemo(() => weekStats.reduce((n, s) => n + s.completed,  0), [weekStats]);
   const totalReps    = useMemo(() => allStats.reduce((n, s) => n + s.totalReps,   0), [allStats]);
 
+  const displayName = useMemo(() => {
+    try {
+      const p = JSON.parse(localStorage.getItem('puh_profile') ?? 'null');
+      if (!p) return session?.user?.name ?? null;
+      const fullName = `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim();
+      return fullName || p.displayName || session?.user?.name || null;
+    } catch { return session?.user?.name ?? null; }
+  }, [session?.user?.name]);
+
   // Upsert current user's stats for every team they belong to
   useEffect(() => {
     const email = getEmail(session?.user?.email) || undefined;
     if (!email || teams.length === 0) return;
-    const displayName = (() => {
-      try {
-        const p = JSON.parse(localStorage.getItem('puh_profile') ?? 'null');
-        if (!p) return null;
-        const fullName = `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim();
-        return fullName || p.displayName || null;
-      } catch { return null; }
-    })();
-    for (const team of teams) {
+    const upserts = teams.map(team =>
       supabase.from('team_stats').upsert({
         email,
         team_code:     team.code,
@@ -863,9 +864,10 @@ export default function TeamPage() {
         streak,
         total_reps:    totalReps,
         updated_at:    new Date().toISOString(),
-      }, { onConflict: 'email,team_code' });
-    }
-  }, [session, teams, weekReps, weekSessions, streak, totalReps]);
+      }, { onConflict: 'email,team_code' })
+    );
+    Promise.all(upserts).catch(() => {});
+  }, [session, teams, weekReps, weekSessions, streak, totalReps, displayName]);
 
   function updateTeam(updated: Team) {
     updateSettings({ teams: teams.map(t => t.id === updated.id ? updated : t) });
