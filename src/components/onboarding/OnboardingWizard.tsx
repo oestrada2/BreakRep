@@ -111,7 +111,7 @@ function WelcomeScreen({ onNext, onLogin, isReturningUser }: {
         </Button>
         <button
           onClick={onLogin}
-          className="w-full flex items-center justify-center gap-2 py-3 text-sm text-[var(--ct1)] hover:text-[var(--ct0)] transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-[var(--c5)] bg-[var(--c2)] text-sm font-semibold text-[var(--ct1)] hover:border-[#FACC15]/50 hover:text-[var(--ct0)] transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
