@@ -20,12 +20,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
 
   const userId: string = (session.user as any).id ?? session.user.email!;
+  const email: string = session.user.email!;
 
-  await Promise.all([
+  // Fetch settings first so we know which teams this user owns as admin
+  const { data: settingsRow } = await supabase
+    .from('user_settings')
+    .select('data')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  const adminTeamCodes: string[] = ((settingsRow?.data as any)?.teams ?? [])
+    .filter((t: any) => t.isAdmin && t.code)
+    .map((t: any) => t.code as string);
+
+  const ops: Promise<unknown>[] = [
+    // Core user data
     supabase.from('user_settings').delete().eq('user_id', userId),
     supabase.from('user_logs').delete().eq('user_id', userId),
-    supabase.from('profiles').delete().eq('email', session.user.email!),
-  ]);
+    supabase.from('profiles').delete().eq('email', email),
+    // Team participation rows for this user
+    supabase.from('team_stats').delete().eq('email', email),
+    supabase.from('team_requests').delete().eq('requester_email', email),
+  ];
+
+  // If the user was admin of any teams, delete those teams and all their data
+  if (adminTeamCodes.length > 0) {
+    ops.push(
+      supabase.from('teams').delete().in('code', adminTeamCodes),
+      supabase.from('team_requests').delete().in('team_code', adminTeamCodes),
+      supabase.from('team_stats').delete().in('team_code', adminTeamCodes),
+    );
+  }
+
+  await Promise.all(ops);
 
   return res.json({ ok: true });
 }
