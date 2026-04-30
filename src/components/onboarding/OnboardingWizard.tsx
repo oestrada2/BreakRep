@@ -109,19 +109,17 @@ function WelcomeScreen({ onNext, onLogin, isReturningUser }: {
         <Button variant="primary" size="lg" className="w-full" onClick={onNext}>
           Get Started
         </Button>
-        {isReturningUser && (
-          <button
-            onClick={onLogin}
-            className="w-full flex items-center justify-center gap-2 py-3 text-sm text-[var(--ct1)] hover:text-[var(--ct0)] transition-colors"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-              <polyline points="10 17 15 12 10 7"/>
-              <line x1="15" y1="12" x2="3" y2="12"/>
-            </svg>
-            Already have an account? Log in
-          </button>
-        )}
+        <button
+          onClick={onLogin}
+          className="w-full flex items-center justify-center gap-2 py-3 text-sm text-[var(--ct1)] hover:text-[var(--ct0)] transition-colors"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+            <polyline points="10 17 15 12 10 7"/>
+            <line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+          Already have an account? Sign in
+        </button>
       </div>
       <StepDots total={8} current={0} />
     </Screen>
@@ -1712,7 +1710,7 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
   }
 
   const handleLogin = () => {
-    onComplete({ onboardingComplete: true });
+    signIn('google', { callbackUrl: '/' });
   };
 
   return (
