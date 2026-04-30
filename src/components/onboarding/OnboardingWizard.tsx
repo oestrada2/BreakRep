@@ -820,6 +820,7 @@ function NotificationsScreen({ onNext, onSkip, onBack }: { onNext: () => void; o
 
 // ─── Screen 5: Sign in ────────────────────────────────────────────────────────
 function SignInScreen({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
+  const { data: session, status } = useSession();
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -908,6 +909,47 @@ function SignInScreen({ onNext, onBack }: { onNext: () => void; onBack: () => vo
             Sign in
           </button>
         </p>
+        <StepDots total={8} current={6} />
+      </Screen>
+    );
+  }
+
+  // Already signed in — show who they are and let them continue
+  if (status === 'authenticated' && session?.user) {
+    const name  = session.user.name  ?? session.user.email ?? 'your account';
+    const email = session.user.email ?? '';
+    const img   = (session.user as any).image as string | undefined;
+    return (
+      <Screen>
+        <button onClick={onBack} className="flex items-center gap-1.5 text-[var(--ct2)] text-xs hover:text-[var(--ct1)] transition-colors">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Back
+        </button>
+        <div className="flex flex-col items-center gap-2 text-center">
+          <Logo />
+          <h2 className="text-[var(--ct0)] text-2xl font-bold mt-2">You're signed in</h2>
+        </div>
+        <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-5 flex items-center gap-4">
+          {img
+            ? <img src={img} alt="" className="w-12 h-12 rounded-full shrink-0" />
+            : <div className="w-12 h-12 rounded-full bg-[#FACC15]/20 flex items-center justify-center text-2xl shrink-0">🧑</div>
+          }
+          <div className="min-w-0">
+            <p className="text-[var(--ct0)] text-sm font-semibold truncate">{name}</p>
+            <p className="text-[var(--ct2)] text-xs truncate">{email}</p>
+          </div>
+        </div>
+        <div className="flex flex-col gap-3">
+          <Button variant="primary" size="lg" className="w-full" onClick={onNext}>
+            Continue as {session.user.name?.split(' ')[0] ?? 'me'}
+          </Button>
+          <button
+            onClick={() => signIn('google', { callbackUrl: '/?onboarding=1', prompt: 'select_account' } as any)}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-[var(--c5)] bg-[var(--c2)] text-sm font-semibold text-[var(--ct1)] hover:border-[#FACC15]/50 hover:text-[var(--ct0)] transition-colors"
+          >
+            Use a different account
+          </button>
+        </div>
         <StepDots total={8} current={6} />
       </Screen>
     );
@@ -1514,13 +1556,6 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
       }
     }
   }, [status]);
-
-  // Skip the sign-in step if the user is already authenticated
-  useEffect(() => {
-    if (status === 'authenticated' && step === 6) {
-      setStep(7);
-    }
-  }, [status, step]);
 
   const [fitnessLevel, setFitnessLevel] = useState<ExperienceLevel>(() => {
     try { return (sessionStorage.getItem('ob_fitness_level') as ExperienceLevel) || 'beginner'; } catch { return 'beginner'; }
