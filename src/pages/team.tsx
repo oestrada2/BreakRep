@@ -31,11 +31,17 @@ type LeaderboardEntry = {
   email: string;
   display_name: string | null;
   week_reps: number;
-  week_sessions: number;
+  week_sessions: number; // stored as compliance % 0–100
   streak: number;
   total_reps: number;
   updated_at: string;
 };
+
+const COMPETITION_EXERCISES = [
+  { key: 'pushups', label: 'Push-ups', emoji: '💪' },
+  { key: 'squats',  label: 'Squats',   emoji: '🦵' },
+  { key: 'situps',  label: 'Plank',    emoji: '⏱️' },
+];
 
 function RoleBadge({ role }: { role: 'admin' | 'member' | 'pending' }) {
   if (role === 'admin') return (
@@ -480,15 +486,21 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
   const [supabasePending, setSupabasePending] = useState<SupabaseRequest[]>([]);
   const [supabaseAdminName, setSupabaseAdminName] = useState<string | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [compExercises, setCompExercises] = useState<string[]>([]);
+  const [editingCompEx, setEditingCompEx] = useState(false);
+  const [draftCompEx, setDraftCompEx]    = useState<string[]>([]);
 
-  // Fetch admin name from Supabase — non-admin members don't have admin in local state
+  // Fetch admin name + competition exercises from Supabase
   useEffect(() => {
     supabase
       .from('teams')
-      .select('admin_name')
+      .select('admin_name, competition_exercises')
       .eq('code', team.code)
       .single()
-      .then(({ data }) => { if (data?.admin_name) setSupabaseAdminName(data.admin_name); });
+      .then(({ data }) => {
+        if (data?.admin_name) setSupabaseAdminName(data.admin_name);
+        if (Array.isArray((data as any)?.competition_exercises)) setCompExercises((data as any).competition_exercises);
+      });
   }, [team.code]);
 
   // Non-admin pending members: detect their own approval in real time
@@ -549,15 +561,21 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
     return () => { supabase.removeChannel(channel); };
   }, [team.code, team.isAdmin]);
 
-  // Fetch leaderboard for this team
+  // Fetch leaderboard — sorted by compliance % (week_sessions)
   useEffect(() => {
     supabase
       .from('team_stats')
       .select('email, display_name, week_reps, week_sessions, streak, total_reps, updated_at')
       .eq('team_code', team.code)
-      .order('week_reps', { ascending: false })
+      .order('week_sessions', { ascending: false })
       .then(({ data }) => setLeaderboard(data ?? []));
   }, [team.code]);
+
+  async function saveCompExercises(exercises: string[]) {
+    try { await supabase.from('teams').update({ competition_exercises: exercises }).eq('code', team.code); } catch { /* column may not exist yet */ }
+    setCompExercises(exercises);
+    setEditingCompEx(false);
+  }
 
   async function approveRequest(req: SupabaseRequest) {
     await supabase.from('team_requests').update({ status: 'approved' }).eq('id', req.id);
@@ -701,12 +719,37 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
           {/* Leaderboard */}
           <SectionLabel title="Leaderboard" />
           <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl overflow-hidden mb-1">
+            {/* Competition exercises strip */}
+            <div className="px-4 py-2.5 border-b border-[var(--c4)] bg-[var(--c4)]/40 flex items-center gap-2 flex-wrap">
+              <span className="text-[var(--ct2)] text-[10px] font-semibold uppercase tracking-wider shrink-0">Competing on:</span>
+              {compExercises.length === 0
+                ? COMPETITION_EXERCISES.map(e => (
+                    <span key={e.key} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--c5)] text-[var(--ct1)] text-[10px] font-semibold">{e.emoji} {e.label}</span>
+                  ))
+                : compExercises.map(key => {
+                    const e = COMPETITION_EXERCISES.find(x => x.key === key);
+                    return e ? <span key={key} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FACC15]/15 text-[#FACC15] text-[10px] font-semibold">{e.emoji} {e.label}</span> : null;
+                  })
+              }
+              <span className="text-[var(--ct2)] text-[10px] ml-auto">Ranked by completion %</span>
+              {team.isAdmin && (
+                <button
+                  onClick={() => { setDraftCompEx(compExercises); setEditingCompEx(true); }}
+                  className="text-[var(--ct2)] text-[10px] underline hover:text-[var(--ct0)] transition-colors"
+                >
+                  Edit
+                </button>
+              )}
+            </div>
+
             {leaderboard.length === 0 ? (
               <p className="px-4 py-5 text-center text-[var(--ct2)] text-sm">No activity yet. Complete sessions to appear here.</p>
             ) : (
               leaderboard.map((entry, i) => {
                 const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null;
                 const initials = (entry.display_name ?? '?').split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+                const pct = entry.week_sessions; // stored as compliance % 0–100
+                const pctColor = pct >= 60 ? '#22C55E' : pct >= 30 ? '#FACC15' : '#EF4444';
                 return (
                   <div key={entry.email} className="flex items-center gap-3 px-4 py-3 border-b border-[var(--c4)] last:border-0">
                     <div className="w-7 text-center text-sm font-bold shrink-0">
@@ -720,17 +763,53 @@ function TeamCard({ team, onUpdate, onLeave }: { team: Team; onUpdate: (updated:
                     }`}>{initials}</div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[var(--ct0)] text-sm font-semibold truncate">{entry.display_name ?? 'Unknown'}</p>
-                      <p className="text-[var(--ct2)] text-xs mt-0.5">{entry.streak} day streak · {entry.total_reps.toLocaleString()} total reps</p>
+                      <p className="text-[var(--ct2)] text-xs mt-0.5">{entry.week_reps.toLocaleString()} reps · {entry.streak}d streak</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-[#FACC15] font-bold text-sm">{entry.week_reps}</p>
-                      <p className="text-[var(--ct2)] text-[10px] mt-0.5">reps this week</p>
+                      <p className="font-bold text-sm" style={{ color: pctColor }}>{pct}%</p>
+                      <p className="text-[var(--ct2)] text-[10px] mt-0.5">completion</p>
                     </div>
                   </div>
                 );
               })
             )}
           </div>
+
+          {/* Admin: edit competition exercises modal */}
+          {editingCompEx && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}>
+              <div className="w-full max-w-sm bg-[var(--c1)] border border-[var(--c5)] rounded-3xl p-6 flex flex-col gap-5">
+                <div>
+                  <h3 className="text-[var(--ct0)] text-lg font-bold">Competition exercises</h3>
+                  <p className="text-[var(--ct2)] text-xs mt-1">Select which exercises count. Leave all off to include everything.</p>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {COMPETITION_EXERCISES.map(ex => {
+                    const on = draftCompEx.includes(ex.key);
+                    return (
+                      <button
+                        key={ex.key}
+                        onClick={() => setDraftCompEx(prev => on ? prev.filter(k => k !== ex.key) : [...prev, ex.key])}
+                        className={`flex items-center gap-3 w-full rounded-xl px-4 py-3 border-2 transition-colors text-left ${
+                          on ? 'border-[#FACC15] bg-[#FACC15]/10' : 'border-[var(--c5)] bg-[var(--c2)] hover:border-[var(--c5)]/80'
+                        }`}
+                      >
+                        <span className="text-xl">{ex.emoji}</span>
+                        <span className={`text-sm font-semibold ${on ? 'text-[#FACC15]' : 'text-[var(--ct1)]'}`}>{ex.label}</span>
+                        <div className={`ml-auto w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${on ? 'border-[#FACC15] bg-[#FACC15]' : 'border-[var(--c5)]'}`}>
+                          {on && <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#0B1C2D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setEditingCompEx(false)} className="flex-1 py-3 rounded-xl border border-[var(--c5)] text-[var(--ct1)] text-sm font-semibold hover:border-[var(--ct2)] transition-colors">Cancel</button>
+                  <button onClick={() => saveCompExercises(draftCompEx)} className="flex-1 py-3 rounded-xl bg-[#FACC15] text-[#0B1C2D] text-sm font-bold hover:bg-[#FDE047] transition-colors">Save</button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Pending join requests — admin only */}
           {team.isAdmin && <SectionLabel title="Join Requests" count={supabasePending.length} />}
@@ -826,10 +905,10 @@ export default function TeamPage() {
 
   const teams = settings.teams ?? [];
 
-  // Compute this-week and all-time rep counts to publish to the leaderboard
-  const weekStart = useMemo(() => offsetISO(-6), []);
-  const weekStats = useMemo(() => allStats.filter(s => s.date >= weekStart), [allStats, weekStart]);
-  const weekReps = useMemo(() => {
+  // Compute this-week and all-time stats to publish to the leaderboard
+  const weekStart         = useMemo(() => offsetISO(-6), []);
+  const weekStats         = useMemo(() => allStats.filter(s => s.date >= weekStart), [allStats, weekStart]);
+  const weekReps          = useMemo(() => {
     const builtinReps = weekStats.reduce((n, s) => n + s.totalReps, 0);
     const customReps  = weekStats.reduce((n, s) => {
       return n + Object.entries(s.customExerciseStats ?? {}).reduce((sum, [key, val]) => {
@@ -838,8 +917,13 @@ export default function TeamPage() {
     }, 0);
     return builtinReps + customReps;
   }, [weekStats, settings.customExerciseTrackingTypes]);
-  const weekSessions = useMemo(() => weekStats.reduce((n, s) => n + s.completed,  0), [weekStats]);
-  const totalReps    = useMemo(() => allStats.reduce((n, s) => n + s.totalReps,   0), [allStats]);
+  const weekSessions      = useMemo(() => weekStats.reduce((n, s) => n + s.completed,    0), [weekStats]);
+  const weekSessionsTotal = useMemo(() => weekStats.reduce((n, s) => n + s.totalSessions, 0), [weekStats]);
+  // Compliance % is the primary leaderboard metric — fair regardless of fitness level
+  const weekCompliancePct = useMemo(() =>
+    weekSessionsTotal > 0 ? Math.round(weekSessions / weekSessionsTotal * 100) : 0,
+  [weekSessions, weekSessionsTotal]);
+  const totalReps         = useMemo(() => allStats.reduce((n, s) => n + s.totalReps, 0), [allStats]);
 
   const displayName = useMemo(() => {
     try {
@@ -860,14 +944,14 @@ export default function TeamPage() {
         team_code:     team.code,
         display_name:  displayName,
         week_reps:     weekReps,
-        week_sessions: weekSessions,
+        week_sessions: weekCompliancePct, // compliance % 0–100 — used as sort key for fair ranking
         streak,
         total_reps:    totalReps,
         updated_at:    new Date().toISOString(),
       }, { onConflict: 'email,team_code' })
     );
     Promise.all(upserts).catch(() => {});
-  }, [session, teams, weekReps, weekSessions, streak, totalReps, displayName]);
+  }, [session, teams, weekReps, weekCompliancePct, streak, totalReps, displayName]);
 
   function updateTeam(updated: Team) {
     updateSettings({ teams: teams.map(t => t.id === updated.id ? updated : t) });
