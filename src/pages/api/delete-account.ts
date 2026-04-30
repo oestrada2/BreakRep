@@ -33,26 +33,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .filter((t: any) => t.isAdmin && t.code)
     .map((t: any) => t.code as string);
 
-  const ops: Promise<unknown>[] = [
-    // Core user data
+  // Delete all user data
+  await Promise.all([
     supabase.from('user_settings').delete().eq('user_id', userId),
     supabase.from('user_logs').delete().eq('user_id', userId),
     supabase.from('profiles').delete().eq('email', email),
-    // Team participation rows for this user
     supabase.from('team_stats').delete().eq('email', email),
     supabase.from('team_requests').delete().eq('requester_email', email),
-  ];
+  ]);
 
-  // If the user was admin of any teams, delete those teams and all their data
+  // If admin of any teams, delete those teams and all their related rows
   if (adminTeamCodes.length > 0) {
-    ops.push(
+    await Promise.all([
       supabase.from('teams').delete().in('code', adminTeamCodes),
       supabase.from('team_requests').delete().in('team_code', adminTeamCodes),
       supabase.from('team_stats').delete().in('team_code', adminTeamCodes),
-    );
+    ]);
   }
-
-  await Promise.all(ops);
 
   return res.json({ ok: true });
 }
