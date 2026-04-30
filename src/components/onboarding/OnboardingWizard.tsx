@@ -1504,9 +1504,7 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
   const [subStep, setSubStep] = useState<SubStep>('choice');
   const { data: session, status } = useSession();
 
-  // Only jump to step 6 when returning from our specific OAuth flow.
-  // We detect this via ?onboarding=1 in the callbackUrl, so a regular
-  // signed-in visitor doesn't get skipped past the welcome screen.
+  // Jump to profile step when returning from Google OAuth (?onboarding=1)
   useEffect(() => {
     if (status === 'authenticated') {
       const params = new URLSearchParams(window.location.search);
@@ -1516,6 +1514,13 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
       }
     }
   }, [status]);
+
+  // Skip the sign-in step if the user is already authenticated
+  useEffect(() => {
+    if (status === 'authenticated' && step === 6) {
+      setStep(7);
+    }
+  }, [status, step]);
 
   const [fitnessLevel, setFitnessLevel] = useState<ExperienceLevel>(() => {
     try { return (sessionStorage.getItem('ob_fitness_level') as ExperienceLevel) || 'beginner'; } catch { return 'beginner'; }
