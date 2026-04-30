@@ -24,6 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   await Promise.all([
     supabase.from('user_settings').delete().eq('user_id', userId),
     supabase.from('user_logs').delete().eq('user_id', userId),
+    supabase.from('profiles').delete().eq('email', session.user.email!),
   ]);
 
   return res.json({ ok: true });
