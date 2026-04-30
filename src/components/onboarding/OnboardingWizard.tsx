@@ -349,20 +349,35 @@ function WorkoutSelectScreen({
   );
 }
 
-// ─── Screen 3: Active days ───────────────────────────────────────────────────
+// ─── Screen 3: Active days & hours ───────────────────────────────────────────
+function fmt12(h: number) {
+  if (h === 0)  return '12 AM';
+  if (h === 12) return '12 PM';
+  return h < 12 ? `${h} AM` : `${h - 12} PM`;
+}
+
 function ActiveDaysScreen({
   activeDays,
+  startHour,
+  endHour,
   onChange,
+  onChangeTime,
   onNext,
   onBack,
 }: {
   activeDays: number[];
+  startHour: number;
+  endHour: number;
   onChange: (days: number[]) => void;
+  onChangeTime: (start: number, end: number) => void;
   onNext: () => void;
   onBack: () => void;
 }) {
   const SHORT  = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
   const LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const hourOptions = Array.from({ length: 19 }, (_, i) => i + 5); // 5 AM–11 PM
+
+  const selectCls = 'flex-1 bg-[var(--c2)] border border-[var(--c5)] text-[var(--ct0)] text-xs font-semibold rounded-xl px-3 py-2.5 appearance-none text-center cursor-pointer focus:outline-none focus:border-[#FACC15]/60';
 
   return (
     <Screen>
@@ -372,59 +387,115 @@ function ActiveDaysScreen({
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           Back
         </button>
-        <h2 className="text-[var(--ct0)] text-2xl font-bold mb-1">Your active days</h2>
+        <h2 className="text-[var(--ct0)] text-2xl font-bold mb-1">Your schedule</h2>
         <p className="text-[var(--ct1)] text-sm leading-relaxed">
-          Sessions are only scheduled on active days. Rest days are skipped automatically.
+          Pick which days and hours you want break reminders. Rest days are skipped automatically.
         </p>
       </div>
 
-      <div className="flex flex-col gap-4">
-        <div className="flex gap-1.5">
-          {LABELS.map((label, i) => {
-            const on = activeDays.includes(i);
-            return (
-              <button
-                key={i}
-                title={label}
-                onClick={() => {
-                  if (on && activeDays.length === 1) return;
-                  const next = on
-                    ? activeDays.filter(d => d !== i)
-                    : [...activeDays, i].sort((a, b) => a - b);
-                  onChange(next);
-                }}
-                className={`flex-1 py-3 rounded-xl text-xs font-bold transition-colors ${
-                  on
-                    ? 'bg-[#FACC15] text-[#0B1C2D]'
-                    : 'bg-[var(--c2)] border border-[var(--c5)] text-[var(--ct2)]'
-                }`}
-              >
-                {SHORT[i]}
-              </button>
-            );
-          })}
+      <div className="flex flex-col gap-5">
+        {/* Days */}
+        <div className="flex flex-col gap-3">
+          <p className="text-[var(--ct2)] text-xs font-semibold uppercase tracking-wider">Active days</p>
+          <div className="flex gap-1.5">
+            {LABELS.map((label, i) => {
+              const on = activeDays.includes(i);
+              return (
+                <button
+                  key={i}
+                  title={label}
+                  onClick={() => {
+                    if (on && activeDays.length === 1) return;
+                    const next = on
+                      ? activeDays.filter(d => d !== i)
+                      : [...activeDays, i].sort((a, b) => a - b);
+                    onChange(next);
+                  }}
+                  className={`flex-1 py-3 rounded-xl text-xs font-bold transition-colors ${
+                    on
+                      ? 'bg-[#FACC15] text-[#0B1C2D]'
+                      : 'bg-[var(--c2)] border border-[var(--c5)] text-[var(--ct2)]'
+                  }`}
+                >
+                  {SHORT[i]}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex gap-2">
+            {[
+              { label: 'Weekdays only', days: [1, 2, 3, 4, 5] },
+              { label: 'Every day',     days: [0, 1, 2, 3, 4, 5, 6] },
+            ].map(({ label, days }) => {
+              const isActive = activeDays.length === days.length && days.every(d => activeDays.includes(d));
+              return (
+                <button
+                  key={label}
+                  onClick={() => onChange(days)}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+                    isActive
+                      ? 'bg-[var(--c2)] border-2 border-[#FACC15] text-[#FACC15]'
+                      : 'bg-[var(--c2)] border border-[var(--c5)] text-[var(--ct2)] hover:border-[var(--ca)]/60 hover:text-[var(--ct1)]'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="flex gap-2">
-          {[
-            { label: 'Weekdays only', days: [1, 2, 3, 4, 5] },
-            { label: 'Every day',     days: [0, 1, 2, 3, 4, 5, 6] },
-          ].map(({ label, days }) => {
-            const isActive = activeDays.length === days.length && days.every(d => activeDays.includes(d));
-            return (
-              <button
-                key={label}
-                onClick={() => onChange(days)}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
-                  isActive
-                    ? 'bg-[var(--c2)] border-2 border-[#FACC15] text-[#FACC15]'
-                    : 'bg-[var(--c2)] border border-[var(--c5)] text-[var(--ct2)] hover:border-[var(--ca)]/60 hover:text-[var(--ct1)]'
-                }`}
-              >
-                {label}
-              </button>
-            );
-          })}
+        {/* Active hours */}
+        <div className="flex flex-col gap-3">
+          <p className="text-[var(--ct2)] text-xs font-semibold uppercase tracking-wider">Active hours</p>
+          <div className="flex items-center gap-2">
+            <select
+              value={startHour}
+              onChange={e => {
+                const val = Number(e.target.value);
+                onChangeTime(val, Math.max(val + 1, endHour));
+              }}
+              className={selectCls}
+            >
+              {hourOptions.map(h => (
+                <option key={h} value={h}>{fmt12(h)}</option>
+              ))}
+            </select>
+            <span className="text-[var(--ct2)] text-xs font-semibold shrink-0">to</span>
+            <select
+              value={endHour}
+              onChange={e => onChangeTime(startHour, Number(e.target.value))}
+              className={selectCls}
+            >
+              {hourOptions.filter(h => h > startHour).map(h => (
+                <option key={h} value={h}>{fmt12(h)}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex gap-2">
+            {[
+              { label: 'Work (9–5)',   start: 9,  end: 17 },
+              { label: 'Morning (6–12)', start: 6, end: 12 },
+              { label: 'Evening (4–9)', start: 16, end: 21 },
+            ].map(({ label, start, end }) => {
+              const isActive = startHour === start && endHour === end;
+              return (
+                <button
+                  key={label}
+                  onClick={() => onChangeTime(start, end)}
+                  className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-colors ${
+                    isActive
+                      ? 'bg-[var(--c2)] border-2 border-[#FACC15] text-[#FACC15]'
+                      : 'bg-[var(--c2)] border border-[var(--c5)] text-[var(--ct2)] hover:border-[var(--ca)]/60 hover:text-[var(--ct1)]'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="bg-[var(--c2)] border border-[var(--c5)] rounded-2xl p-4 flex items-start gap-3">
@@ -1444,7 +1515,9 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
     }
   }, [status]);
 
-  const [fitnessLevel, setFitnessLevel] = useState<ExperienceLevel>('beginner');
+  const [fitnessLevel, setFitnessLevel] = useState<ExperienceLevel>(() => {
+    try { return (sessionStorage.getItem('ob_fitness_level') as ExperienceLevel) || 'beginner'; } catch { return 'beginner'; }
+  });
   const [assessReps, setAssessReps] = useState(0);
   const [enabledExercises, setEnabledExercises] = useState<EnabledExercises>(() => {
     try {
@@ -1467,7 +1540,15 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
     } catch {}
     return {};
   });
-  const [activeDays, setActiveDays] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [activeDays, setActiveDays] = useState<number[]>(() => {
+    try { const d = JSON.parse(sessionStorage.getItem('ob_active_days') ?? 'null'); return Array.isArray(d) ? d : [1,2,3,4,5]; } catch { return [1,2,3,4,5]; }
+  });
+  const [activeStartHour, setActiveStartHour] = useState<number>(() => {
+    try { const h = JSON.parse(sessionStorage.getItem('ob_hours') ?? 'null'); return h?.start ?? 9; } catch { return 9; }
+  });
+  const [activeEndHour, setActiveEndHour] = useState<number>(() => {
+    try { const h = JSON.parse(sessionStorage.getItem('ob_hours') ?? 'null'); return h?.end ?? 17; } catch { return 17; }
+  });
   const [createdTeamName, setCreatedTeamName] = useState('');
   const [createdTeamCode, setCreatedTeamCode] = useState('');
   const [createdTeamOrg,  setCreatedTeamOrg]  = useState('');
@@ -1478,6 +1559,14 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
       sessionStorage.setItem('ob_exercise_draft', JSON.stringify({ enabledExercises, customExerciseLabels, customExerciseTrackingTypes }));
     } catch {}
   }, [enabledExercises, customExerciseLabels, customExerciseTrackingTypes]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('ob_active_days', JSON.stringify(activeDays));
+      sessionStorage.setItem('ob_hours', JSON.stringify({ start: activeStartHour, end: activeEndHour }));
+      sessionStorage.setItem('ob_fitness_level', fitnessLevel);
+    } catch {}
+  }, [activeDays, activeStartHour, activeEndHour, fitnessLevel]);
 
   const toggleExercise = (key: string) => {
     setEnabledExercises(prev => ({ ...prev, [key]: !prev[key] }));
@@ -1497,7 +1586,12 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
   };
 
   const finish = async (profileName = '', firstName = '', lastName = '') => {
-    try { sessionStorage.removeItem('ob_exercise_draft'); } catch {}
+    try {
+      sessionStorage.removeItem('ob_exercise_draft');
+      sessionStorage.removeItem('ob_active_days');
+      sessionStorage.removeItem('ob_hours');
+      sessionStorage.removeItem('ob_fitness_level');
+    } catch {}
     const teamId = createdTeamName && createdTeamCode ? 'team-' + Date.now() : '';
     const adminName = `${firstName} ${lastName}`.trim() || profileName || 'Admin';
 
@@ -1561,8 +1655,8 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
       teams,
       reminders: {
         scheduleMode: 'auto',
-        startHour: 9, startMinute: 0,
-        endHour: 17,  endMinute: 0,
+        startHour: activeStartHour, startMinute: 0,
+        endHour: activeEndHour,     endMinute: 0,
         customMinutes: [],
         enabled: true,
         snoozeMinutes: 10,
@@ -1590,12 +1684,15 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
     );
   }
 
-  // Step 3: active days
+  // Step 3: active days & hours
   if (step === 3) {
     return (
       <ActiveDaysScreen
         activeDays={activeDays}
+        startHour={activeStartHour}
+        endHour={activeEndHour}
         onChange={setActiveDays}
+        onChangeTime={(s, e) => { setActiveStartHour(s); setActiveEndHour(e); }}
         onNext={() => setStep(4)}
         onBack={() => setStep(2)}
       />

@@ -34,10 +34,6 @@ export default function Today() {
   const { status: authStatus } = useSession();
   const router = useRouter();
 
-  useEffect(() => {
-    if (authStatus === 'unauthenticated') router.replace('/login');
-  }, [authStatus, router]);
-
   const {
     settings, todaySessions, todayStats, allStats,
     completeSession, undoSession, skipSession, snoozeSession,
@@ -47,9 +43,11 @@ export default function Today() {
 
   const [repOverrides, setRepOverrides] = useState<Record<string, number>>({});
 
-  if (authStatus === 'loading' || authStatus === 'unauthenticated') return null;
-  if (!initialized || !cloudSynced) return null;
+  if (authStatus === 'loading') return null;
+  if (!initialized) return null;
 
+  // Show onboarding to anyone (signed-in or not) who hasn't completed it.
+  // Unauthenticated users will sign in at step 6 of the wizard.
   if (!settings.onboardingComplete) {
     return (
       <OnboardingWizard
@@ -58,6 +56,10 @@ export default function Today() {
       />
     );
   }
+
+  // Main dashboard requires authentication and a completed cloud sync.
+  if (authStatus === 'unauthenticated') { router.replace('/login'); return null; }
+  if (!cloudSynced) return null;
 
   const today = new Date().toISOString().split('T')[0];
   const { reps: todayReps, status: planStatus } = getPlanStatusForDate(today, settings, allStats);

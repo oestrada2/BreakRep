@@ -4,6 +4,7 @@ import { SettingsForm } from '@/components/settings/SettingsForm';
 import type { AppSettings } from '@/types';
 import { useRouter } from 'next/router';
 import { signOut } from 'next-auth/react';
+import { clearAll } from '@/lib/storage';
 
 export default function Settings() {
   const router = useRouter();
@@ -32,6 +33,7 @@ export default function Settings() {
           onReset={() => { resetProgress(); router.push('/'); }}
           onDeleteAccount={async () => {
             await fetch('/api/delete-account', { method: 'DELETE' }).catch(() => {});
+            clearAll();
             resetProgress();
             router.push('/');
           }}
