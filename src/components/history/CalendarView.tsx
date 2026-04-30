@@ -12,7 +12,7 @@ function toLocalISO(y: number, m: number, d: number) {
 }
 
 function dayStyle(stats: DailyStats | undefined): { ring: string; glow: string; text: string; bg: string } {
-  if (!stats || stats.totalSessions === 0 || stats.completed === 0) return { ring: '', glow: '', text: 'var(--ct2)', bg: 'var(--c4)' };
+  if (!stats || stats.totalSessions === 0) return { ring: '', glow: '', text: 'var(--ct2)', bg: 'var(--c4)' };
   const r = stats.complianceRate;
   if (r >= 0.6) return { ring: '#22C55E', glow: '0 0 14px 5px rgba(34,197,94,0.35)', text: '#fff', bg: '#22C55E' };
   if (r >= 0.3) return { ring: '#FACC15', glow: '0 0 0 2px #FACC15, 0 0 10px 3px rgba(250,204,21,0.4)',  text: '#FACC15', bg: 'transparent' };
