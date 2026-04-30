@@ -127,7 +127,7 @@ function WelcomeScreen({ onNext, onLogin, isReturningUser }: {
 }
 
 // ─── Screen 2: How it works ───────────────────────────────────────────────────
-function HowItWorksScreen({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }) {
+function HowItWorksScreen({ onNext, onSkip, onBack }: { onNext: () => void; onSkip: () => void; onBack: () => void }) {
   const cards = [
     { icon: '🏋️', color: '#FACC15', bg: 'bg-[#FACC15]/10', title: 'Move',             desc: 'Complete quick office-friendly exercises during scheduled breaks throughout your day.' },
     { icon: '📊', color: '#22C55E', bg: 'bg-[#22C55E]/10', title: 'Track',            desc: 'Log sessions automatically and watch your consistency grow over time.' },
@@ -137,6 +137,10 @@ function HowItWorksScreen({ onNext, onSkip }: { onNext: () => void; onSkip: () =
     <Screen>
       <Logo />
       <div>
+        <button onClick={onBack} className="flex items-center gap-1.5 text-[var(--ct2)] text-xs hover:text-[var(--ct1)] transition-colors mb-3">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Back
+        </button>
         <h2 className="text-[var(--ct0)] text-2xl font-bold mb-1">How it works</h2>
         <p className="text-[var(--ct1)] text-sm">Three steps to a healthier workday.</p>
       </div>
@@ -1722,7 +1726,7 @@ export function OnboardingWizard({ onComplete, isReturningUser = false }: Onboar
           isReturningUser={isReturningUser}
         />
       )}
-      {step === 1 && <HowItWorksScreen    onNext={() => setStep(2)} onSkip={() => setStep(2)} />}
+      {step === 1 && <HowItWorksScreen    onNext={() => setStep(2)} onSkip={() => setStep(2)} onBack={() => setStep(0)} />}
       {step === 5 && <NotificationsScreen onNext={() => setStep(6)} onSkip={() => setStep(6)} onBack={() => setStep(4)} />}
       {step === 6 && <SignInScreen        onNext={() => setStep(7)} onBack={() => setStep(5)} />}
       {step === 7 && <ProfileScreen onFinish={(dn, fn, ln) => finish(dn, fn, ln)} onBack={() => setStep(6)} onTeamCreated={(name, code, org) => { setCreatedTeamName(name); setCreatedTeamCode(code); setCreatedTeamOrg(org); }} onTeamJoined={team => setJoinedTeam(team)} />}
